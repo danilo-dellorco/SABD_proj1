@@ -17,7 +17,7 @@ import java.util.List;
  * The examples.LogAnalyzer takes in an apache access log file and
  * computes some statistics on them.
  */
-public class LogAnalyzer {
+public class Testing {
 
     private static String pathToFile = "data/access.log";
 

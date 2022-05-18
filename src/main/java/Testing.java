@@ -1,12 +1,7 @@
+import examples.TaxiRow;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.function.Function;
-import org.apache.spark.api.java.function.VoidFunction;
-import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
-import utils.ApacheAccessLog;
-
-import java.time.format.DateTimeFormatter;
 
 public class Testing {
     static int count_null = 0;
@@ -30,8 +25,8 @@ public class Testing {
         query1_month(spark,dataset2,2);
         query1_month(spark,dataset3,3);
 
-        // Print all the TaxiRow RDDs
-        // taxiRows.foreach((VoidFunction<TaxiRow>) r->System.out.println(r.toString()));
+        // Print all the examples.TaxiRow RDDs
+        // taxiRows.foreach((VoidFunction<examples.TaxiRow>) r->System.out.println(r.toString()));
         // tip/(total_amount-tolls_amount)
 
 

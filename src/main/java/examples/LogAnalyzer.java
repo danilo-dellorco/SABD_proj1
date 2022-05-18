@@ -1,3 +1,5 @@
+package examples;
+
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
@@ -10,7 +12,7 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * The LogAnalyzer takes in an apache access log file and
+ * The examples.LogAnalyzer takes in an apache access log file and
  * computes some statistics on them.
  */
 public class LogAnalyzer {

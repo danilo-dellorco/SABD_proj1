@@ -1,13 +1,17 @@
 WordCount.class
-LogAnalyzer.class
 utils/ValueComparator.class
+LogAnalyzer.class
 HashtagInvertedIndex$HashtagToTweetExtractor.class
 sparkSQL/MainQuery1.class
 utils/ApacheAccessLog.class
 utils/OutletParser.class
+<<<<<<< HEAD
+=======
 utils/TweetParser.class
 sparkSQL/Query1Preprocessing.class
+>>>>>>> danilo
 utils/Outlet.class
+sparkSQL/Query1Preprocessing.class
 TweetMining.class
 basics/SimpleJoin.class
 basics/SquareEvenNumbers.class
@@ -17,3 +21,5 @@ HashtagInvertedIndex$1.class
 basics/DistinctAndSample.class
 sparkSQL/Query1SparkSQL$1.class
 utils/Tweet.class
+basics/DistinctAndSample.class
+sparkSQL/Query1SparkSQL$1.class

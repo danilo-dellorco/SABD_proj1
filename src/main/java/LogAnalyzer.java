@@ -2,6 +2,8 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.api.java.function.ForeachFunction;
+import org.apache.spark.api.java.function.VoidFunction;
 import scala.Tuple2;
 import utils.ApacheAccessLog;
 import utils.ValueComparator;
@@ -60,6 +62,8 @@ public class LogAnalyzer {
         JavaRDD<Long> contentSizes = accessLogs
                 .map(log -> log.getContentSize())
                 .cache();
+
+        contentSizes.foreach((VoidFunction<Long>) l -> System.out.println(l));
 
         /* Compute some statistics, using the cached RDD contentSizes */
         Long totalContentSize   = contentSizes.reduce((a, b) -> a + b);

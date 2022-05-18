@@ -10,8 +10,8 @@ import java.util.List;
 
 public class SimpleJoin {
 
-    private static final String fileTransactions = "data/transactions.txt";
-    private static final String fileUsers = "data/users.txt";
+    private static final String fileTransactions = "hdfs://hdfs-master:54310/transactions.txt";
+    private static final String fileUsers = "hdfs://hdfs-master:54310/user.txt";
 
     public static void main(String[] args) throws Exception {
 

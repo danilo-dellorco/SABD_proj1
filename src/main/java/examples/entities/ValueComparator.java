@@ -1,4 +1,4 @@
-package utils;
+package examples.entities;
 
 import scala.Tuple2;
 

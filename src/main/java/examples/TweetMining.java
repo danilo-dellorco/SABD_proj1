@@ -4,8 +4,8 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import scala.Tuple2;
-import utils.Tweet;
-import utils.TweetParser;
+import examples.entities.Tweet;
+import examples.entities.TweetParser;
 
 import java.util.Arrays;
 import java.util.List;

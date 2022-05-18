@@ -1,4 +1,4 @@
-package utils;
+package examples.entities;
 
 import org.codehaus.jackson.map.ObjectMapper;
 

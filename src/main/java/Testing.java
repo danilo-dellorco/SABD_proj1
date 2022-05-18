@@ -3,8 +3,12 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Testing {
     static int count_null = 0;
+    static List query1_results = new ArrayList();
     public static void main(String[] args){
         SparkSession spark = SparkSession
                 .builder()
@@ -12,18 +16,19 @@ public class Testing {
                 .appName("Java Spark SQL basic example")
                 .getOrCreate();
 
-        String reducedDataset = "data/reducedDataset.parquet";
         String dataset1 = "data/yellow_tripdata_2021-12.parquet";
         String dataset2 = "data/yellow_tripdata_2022-01.parquet";
         String dataset3 ="data/yellow_tripdata_2022-02.parquet";
 
-
-        JavaRDD<Row> parquetRDD_2 = spark.read().option("header","false").parquet(dataset2).toJavaRDD();
-        JavaRDD<Row> parquetRDD_3 = spark.read().option("header","false").parquet(dataset3).toJavaRDD();
-
         query1_month(spark,dataset1,1);
         query1_month(spark,dataset2,2);
         query1_month(spark,dataset3,3);
+        System.out.println("========================== QUERY 1 ==========================");
+        for (int i=0;i<3;i++){
+            System.out.println(String.format("Computed Mean for Month %d: ",i)+query1_results.get(i));
+        }
+        System.out.println("=============================================================");
+
 
         // Print all the examples.TaxiRow RDDs
         // taxiRows.foreach((VoidFunction<examples.TaxiRow>) r->System.out.println(r.toString()));
@@ -77,7 +82,8 @@ public class Testing {
         double tolls_amount = tolls.reduce((a,b)->a+b);
 
         double mean = total_tips/(total_amount-tolls_amount);
-        System.out.println(String.format("Computed Mean for Month %d: ",month)+mean);
+
+        query1_results.add(mean);
     }
 
 }

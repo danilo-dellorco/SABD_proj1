@@ -1,12 +1,10 @@
 package sparkSQL;
 
-import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import scala.Tuple3;
-import scala.Tuple5;
-import utils.Outlet;
-import utils.OutletParser;
+import examples.entities.Outlet;
+import examples.entities.OutletParser;
 
 public class  Query1Preprocessing {
 

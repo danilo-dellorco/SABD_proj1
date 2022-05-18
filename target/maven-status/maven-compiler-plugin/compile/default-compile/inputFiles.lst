@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /home/mich/Documents/code/SABD_proj1/src/main/java/basics/SimpleJoin.java
 /home/mich/Documents/code/SABD_proj1/src/main/java/sparkSQL/MainQuery1.java
 /home/mich/Documents/code/SABD_proj1/src/main/java/utils/OutletParser.java
@@ -16,3 +17,21 @@
 /home/mich/Documents/code/SABD_proj1/src/main/java/basics/DistinctAndSample.java
 /home/mich/Documents/code/SABD_proj1/src/main/java/basics/SquareEvenNumbers.java
 /home/mich/Documents/code/SABD_proj1/src/main/java/TweetMining.java
+=======
+/home/danilo/SABD_proj1/src/main/java/utils/ValueComparator.java
+/home/danilo/SABD_proj1/src/main/java/TweetMining.java
+/home/danilo/SABD_proj1/src/main/java/utils/ApacheAccessLog.java
+/home/danilo/SABD_proj1/src/main/java/utils/OutletParser.java
+/home/danilo/SABD_proj1/src/main/java/utils/TweetParser.java
+/home/danilo/SABD_proj1/src/main/java/HashtagInvertedIndex.java
+/home/danilo/SABD_proj1/src/main/java/LogAnalyzer.java
+/home/danilo/SABD_proj1/src/main/java/sparkSQL/Query1Preprocessing.java
+/home/danilo/SABD_proj1/src/main/java/basics/DistinctAndSample.java
+/home/danilo/SABD_proj1/src/main/java/sparkSQL/Query1SparkSQL.java
+/home/danilo/SABD_proj1/src/main/java/utils/Tweet.java
+/home/danilo/SABD_proj1/src/main/java/basics/SquareEvenNumbers.java
+/home/danilo/SABD_proj1/src/main/java/utils/Outlet.java
+/home/danilo/SABD_proj1/src/main/java/WordCount.java
+/home/danilo/SABD_proj1/src/main/java/basics/SimpleJoin.java
+/home/danilo/SABD_proj1/src/main/java/sparkSQL/MainQuery1.java
+>>>>>>> danilo

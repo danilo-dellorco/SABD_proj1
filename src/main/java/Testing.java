@@ -3,40 +3,41 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Testing {
-    static int count_null = 0;
-    static List query1_results = new ArrayList();
+    private static int count_null = 0;
+    private static List query1_results = new ArrayList();
+    private static String sparkURL = "spark://spark-master:7077";
+    private static String hdfsURL = "hdfs://hdfs-master:54310";
+//  private static String sparkURL = "local";
+//  private static String hdfsURL = "data";
+    private static String dataset1_path = hdfsURL+"/yellow_tripdata_2021-12.parquet";
+    private static String dataset2_path = hdfsURL+"/yellow_tripdata_2022-01.parquet";
+    private static String dataset3_path = hdfsURL+"/yellow_tripdata_2022-02.parquet";
     public static void main(String[] args){
         SparkSession spark = SparkSession
                 .builder()
-                .master("local")
+                .master(sparkURL)
                 .appName("Java Spark SQL basic example")
                 .getOrCreate();
 
-        String dataset1 = "data/yellow_tripdata_2021-12.parquet";
-        String dataset2 = "data/yellow_tripdata_2022-01.parquet";
-        String dataset3 ="data/yellow_tripdata_2022-02.parquet";
 
-        query1_month(spark,dataset1,1);
-        query1_month(spark,dataset2,2);
-        query1_month(spark,dataset3,3);
+        query1_month(spark,dataset1_path,1);
+        query1_month(spark,dataset2_path,2);
+        query1_month(spark,dataset3_path,3);
         System.out.println("========================== QUERY 1 ==========================");
         for (int i=0;i<3;i++){
             System.out.println(String.format("Computed Mean for Month %d: ",i)+query1_results.get(i));
         }
         System.out.println("=============================================================");
-
-
-        // Print all the examples.TaxiRow RDDs
-        // taxiRows.foreach((VoidFunction<examples.TaxiRow>) r->System.out.println(r.toString()));
-        // tip/(total_amount-tolls_amount)
-
-
-
-        //System.out.println("\n\n\nRows with null fields: " + count_null);
+        try {
+            System.in.read();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
     public static TaxiRow ParseRow(Row r) {
         TaxiRow t = new TaxiRow();
@@ -84,6 +85,9 @@ public class Testing {
         double mean = total_tips/(total_amount-tolls_amount);
 
         query1_results.add(mean);
+        System.out.println( tips.getNumPartitions());
+        System.out.println( total.getNumPartitions());
+        System.out.println( tolls.getNumPartitions());
     }
 
 }

@@ -1,10 +1,10 @@
-import examples.TaxiRow;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 
 public class Testing {
     static int count_null = 0;
@@ -28,10 +28,11 @@ public class Testing {
             System.out.println(String.format("Computed Mean for Month %d: ",i)+query1_results.get(i));
         }
         System.out.println("=============================================================");
+        promptEnterKey();
 
 
-        // Print all the examples.TaxiRow RDDs
-        // taxiRows.foreach((VoidFunction<examples.TaxiRow>) r->System.out.println(r.toString()));
+        // Print all the TaxiRow RDDs
+        // taxiRows.foreach((VoidFunction<TaxiRow>) r->System.out.println(r.toString()));
         // tip/(total_amount-tolls_amount)
 
 
@@ -84,6 +85,13 @@ public class Testing {
         double mean = total_tips/(total_amount-tolls_amount);
 
         query1_results.add(mean);
+    }
+
+    public static void promptEnterKey(){
+        System.out.println("Running Spark WebUI on http://localhost:4040/jobs/");
+        System.out.println("Press \"ENTER\" to end application...");
+        Scanner scanner = new Scanner(System.in);
+        scanner.nextLine();
     }
 
 }

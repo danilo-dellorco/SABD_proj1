@@ -1,4 +1,3 @@
-import examples.TaxiRow;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
@@ -6,6 +5,7 @@ import org.apache.spark.sql.SparkSession;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 
 public class Testing {
     private static int count_null = 0;
@@ -33,11 +33,16 @@ public class Testing {
             System.out.println(String.format("Computed Mean for Month %d: ",i)+query1_results.get(i));
         }
         System.out.println("=============================================================");
-        try {
-            System.in.read();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        promptEnterKey();
+
+
+        // Print all the TaxiRow RDDs
+        // taxiRows.foreach((VoidFunction<TaxiRow>) r->System.out.println(r.toString()));
+        // tip/(total_amount-tolls_amount)
+
+
+
+        //System.out.println("\n\n\nRows with null fields: " + count_null);
     }
     public static TaxiRow ParseRow(Row r) {
         TaxiRow t = new TaxiRow();
@@ -88,6 +93,13 @@ public class Testing {
         System.out.println( tips.getNumPartitions());
         System.out.println( total.getNumPartitions());
         System.out.println( tolls.getNumPartitions());
+    }
+
+    public static void promptEnterKey(){
+        System.out.println("Running Spark WebUI on http://localhost:4040/jobs/");
+        System.out.println("Press \"ENTER\" to end application...");
+        Scanner scanner = new Scanner(System.in);
+        scanner.nextLine();
     }
 
 }

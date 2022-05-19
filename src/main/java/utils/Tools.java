@@ -6,14 +6,14 @@ import org.apache.spark.sql.Row;
 
 import java.util.Scanner;
 
-public class tools {
+public class Tools {
     public static void printRDD(JavaRDD<TaxiRow> taxiRows){
         taxiRows.foreach((VoidFunction<TaxiRow>) r->System.out.println(r.toString()));
     }
 
     public static void promptEnterKey() {
         System.out.println("Running Spark WebUI on http://localhost:4040/jobs/");
-        System.out.println("Press \"ENTER\" to end application...");
+        System.out.println("Double press \"ENTER\" to end application...");
         Scanner scanner = new Scanner(System.in);
         scanner.nextLine();
     }
@@ -43,7 +43,6 @@ public class tools {
         } catch (NullPointerException e) {
             // Ignore rows with null fields
         }
-
         return t;
     }
 }

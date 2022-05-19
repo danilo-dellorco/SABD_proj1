@@ -1,7 +1,6 @@
-import org.apache.spark.SparkContext;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.function.VoidFunction;
+import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import scala.Tuple2;
@@ -10,8 +9,8 @@ import utils.TaxiRow;
 import java.util.ArrayList;
 import java.util.List;
 
-import static utils.tools.ParseRow;
-import static utils.tools.promptEnterKey;
+import static utils.Tools.ParseRow;
+import static utils.Tools.promptEnterKey;
 
 public class Testing {
     private static int count_null = 0;
@@ -30,6 +29,7 @@ public class Testing {
                 .master(sparkURL)
                 .appName("Java Spark SQL basic example")
                 .getOrCreate();
+        JavaSparkContext sc = new JavaSparkContext();
 
         // QUERY 1
         /*
@@ -88,14 +88,32 @@ public class Testing {
         JavaRDD<Row> rowRDD = spark.read().option("header", "false").parquet(dataset).toJavaRDD();
         JavaRDD<TaxiRow> taxis = rowRDD.map(r -> ParseRow(r));
 
-        try {
-            JavaPairRDD<Long,Integer> occurrences = taxis.mapToPair(r->new Tuple2<>(r.getDOLocationID(),1));
-            JavaPairRDD<Long, Integer> reduced = occurrences.reduceByKey((a, b) -> a + b);
-            reduced.foreach(data -> {
-                System.out.println("DOLocationID="+data._1() + " occurrences=" + data._2());
-            });
-        } catch(Exception e){
-            //Skip rows without getDOLocationID
+        JavaPairRDD<Long, Integer> occurrences = taxis.mapToPair(r -> new Tuple2<>(r.getDOLocationID(), 1));
+        JavaPairRDD<Long, Integer> reduced = occurrences.reduceByKey((a, b) -> a + b);
+
+        System.out.println("OCCURRENCES");
+        reduced.foreach(data -> {
+            System.out.println("DOLocationID=" + data._1() + " occurrences=" + data._2());
+        });
+
+        JavaPairRDD<Integer,Long> swapped = reduced.mapToPair(x -> new Tuple2<>(x._2(), x._1()));
+        System.out.println("\n\nSWAPPED");
+        swapped.foreach(data -> {
+            System.out.println("occurrences=" + data._1() + " DOLocationID=" + data._2());
+        });
+
+        JavaPairRDD<Integer,Long> sorted = swapped.sortByKey(false);
+        System.out.println("\n\nSORTED");
+        sorted.foreach(data -> {
+            System.out.println("occurrences=" + data._1() + " DOLocationID=" + data._2());
+        });
+
+        List<Tuple2<Integer,Long>> top = sorted.take(5);
+        System.out.println("\n\nTOP");
+        int i =0;
+        for (Tuple2<Integer,Long> t:top){
+            System.out.println(String.format("%d) %d | %d",i,t._2(),t._1()));
+            i++;
         }
     }
 }

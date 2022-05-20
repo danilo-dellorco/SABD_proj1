@@ -1,3 +1,5 @@
+package utils;
+
 import org.apache.spark.sql.Row;
 
 import java.sql.Timestamp;
@@ -29,7 +31,7 @@ public class TaxiRow {
 
     @Override
     public String toString() {
-        return "TaxiRow{" +
+        return "utils.TaxiRow{" +
                 "VendorID=" + VendorID +
                 ", tpep_pickup_datetime=" + tpep_pickup_datetime +
                 ", tpep_dropoff_datetime=" + tpep_dropoff_datetime +

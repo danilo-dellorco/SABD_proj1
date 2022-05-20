@@ -14,8 +14,11 @@ public class ValQ3 implements Serializable {
         setOccurrences(occurrences);
     }
 
-    public ValQ3(Double fare_stddev) {
+    public ValQ3(Double passengers_mean, Double fare_mean, Integer occurrences, Double fare_stddev) {
+        setPassengers(passengers_mean);
+        setFare(fare_mean);
         setFare_stddev(fare_stddev);
+        setOccurrences(occurrences);
     }
 
     public Double getPassengers() {
@@ -63,6 +66,7 @@ public class ValQ3 implements Serializable {
                 "passengers=" + passengers +
                 ", fare=" + fare +
                 ", occurrences=" + occurrences +
+                ", fare_stddev=" + fare_stddev +
                 '}';
     }
 }

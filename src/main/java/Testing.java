@@ -139,9 +139,8 @@ public class Testing {
             ValQ3 v = new ValQ3(pass, fare, occ);
             return v;
         });
-
-        //reduced.foreach((VoidFunction<Tuple2<Long, ValQ3>>) r-> System.out.println(r));
-
+        //System.out.println(reduced.count());
+        //reduced.sortByKey(false).foreach((VoidFunction<Tuple2<Long, ValQ3>>) r->System.out.println(r.toString()));
 
         // ValQ3 = {pass,fare,occurr}
         JavaPairRDD<Long, ValQ3> statistics = reduced.mapToPair(
@@ -153,32 +152,51 @@ public class Testing {
                     return new Tuple2<>(r._1(),
                             new ValQ3(pass_mean, fare_mean, num_occurrences));
                 });
-        //statistics.foreach((VoidFunction<Tuple2<Long, ValQ3>>) r-> System.out.println(r));
+        statistics.foreach((VoidFunction<Tuple2<Long, ValQ3>>) r->System.out.println(r.toString()));
 
         JavaPairRDD<Long, Tuple2<ValQ3, ValQ3>> joined = occurrences.join(statistics);
-        //joined.foreach((VoidFunction<Tuple2<Long, Tuple2<ValQ3, ValQ3>>>) r->System.out.println(r.toString()));
 
-        // ID, fare_mean
+        System.out.println("JOINEEEEEEED");
+        joined.foreach((VoidFunction<Tuple2<Long, Tuple2<ValQ3, ValQ3>>>) r->System.out.println(r.toString()));
+
+
         JavaPairRDD<Long, ValQ3> iterations = joined.mapToPair(
                 r -> {
                     Double fare_mean = r._2()._2().getFare();
-                    Double fare_val = r._2()._1().getFare();
-                    Double fare_dev = Math.pow((fare_val - fare_mean), 2);
+                    Double fare_val  = r._2()._1().getFare();
+                    Double fare_dev  = Math.pow((fare_val-fare_mean),2);
                     r._2()._2().setFare_stddev(fare_dev);
 
                     return new Tuple2<>(r._1(), r._2()._2());
                 });
         // iterations.foreach((VoidFunction<Tuple2<Long, ValQ3>>) r-> System.out.println(r));
 
-        JavaPairRDD<Long, ValQ3> deviation = iterations.reduceByKey((Function2<ValQ3, ValQ3, ValQ3>) (v1, v2) -> {
-            Double fare_total_stddev = v1.getFare_stddev() + v2.getFare_stddev();
-            ValQ3 v = new ValQ3(fare_total_stddev);
+        JavaPairRDD<Long, ValQ3> stddev_aggr = iterations.reduceByKey((Function2<ValQ3, ValQ3, ValQ3>) (v1, v2) -> {
+            Double fare_total_stddev = v1.getFare_stddev()+v2.getFare_stddev();
+            ValQ3 v = new ValQ3(v1.getPassengers(),v1.getFare(),v1.getOccurrences(),fare_total_stddev);
             return v;
         });
 
+        JavaPairRDD<Long, ValQ3> deviation = stddev_aggr.mapToPair(
+                r -> {
+                    Double fare_mean = r._2().getFare();
+                    Integer n = r._2().getOccurrences();
+                    Double fare_dev  = Math.sqrt(r._2().getFare_stddev()/n);
+                    Double pass_mean = r._2().getPassengers();
+                    ValQ3 v = new ValQ3(pass_mean,fare_mean,n,fare_dev);
         // joined = JavaPairRDD<Long, Tuple2<ValQ3, ValQ3>
         //joined.foreach((VoidFunction<Tuple2<Long, Tuple2<ValQ3, ValQ3>>>) r -> System.out.println(r.toString()));
 
+                    return new Tuple2<>(r._1(),v);
+                });
+
+        System.out.println("DEVIATIOOOOOON");
+        deviation.foreach((VoidFunction<Tuple2<Long, ValQ3>>) r->System.out.println(r.toString()));
+        deviation.foreach((VoidFunction<Tuple2<Long, ValQ3>>) r->System.out.println(r.toString()));
+
+
+        /*
+        JavaPairRDD<Integer,Long> swapped = reduced.mapToPair(x -> new Tuple2<>(x._2(), x._1()));
         JavaPairRDD<Integer, Tuple4<Long, Double, Double, Double>> swapped = deviation.mapToPair(
                 x -> new Tuple2<>(x._2().getOccurrences(), new Tuple4<>(x._1(), x._2().getPassengers(), x._2().getFare(), x._2().getFare_stddev())));
         System.out.println("\n\nSWAPPED");

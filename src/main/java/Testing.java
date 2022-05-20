@@ -6,10 +6,14 @@ import org.apache.spark.api.java.function.VoidFunction;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.api.java.function.Function2;
-import scala.Tuple2;
+import scala.*;
 import utils.TaxiRow;
 import utils.ValQ3;
+
+import java.lang.Double;
+import java.lang.Long;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import static utils.Tools.ParseRow;
@@ -99,40 +103,40 @@ public class Testing {
             System.out.println("DOLocationID=" + data._1() + " occurrences=" + data._2());
         });
 
-        JavaPairRDD<Integer,Long> swapped = reduced.mapToPair(x -> new Tuple2<>(x._2(), x._1()));
+        JavaPairRDD<Integer, Long> swapped = reduced.mapToPair(x -> new Tuple2<>(x._2(), x._1()));
         System.out.println("\n\nSWAPPED");
         swapped.foreach(data -> {
             System.out.println("occurrences=" + data._1() + " DOLocationID=" + data._2());
         });
 
-        JavaPairRDD<Integer,Long> sorted = swapped.sortByKey(false);
+        JavaPairRDD<Integer, Long> sorted = swapped.sortByKey(false);
         System.out.println("\n\nSORTED");
         sorted.foreach(data -> {
             System.out.println("occurrences=" + data._1() + " DOLocationID=" + data._2());
         });
 
-        List<Tuple2<Integer,Long>> top = sorted.take(5);
+        List<Tuple2<Integer, Long>> top = sorted.take(5);
         System.out.println("\n\nTOP");
-        int i =0;
-        for (Tuple2<Integer,Long> t:top){
-            System.out.println(String.format("%d) %d | %d",i,t._2(),t._1()));
+        int i = 0;
+        for (Tuple2<Integer, Long> t : top) {
+            System.out.println(String.format("%d) %d | %d", i, t._2(), t._1()));
             i++;
         }
     }
 
     public static void query3_pro(SparkSession spark, String dataset) {
-        JavaRDD<Row> rowRDD = spark.read().option("header", "false").parquet(dataset).toJavaRDD();
+        JavaRDD<Row> rowRDD = spark.read().option("header", "false").parquet(dataset).limit(1000).toJavaRDD();
         JavaRDD<TaxiRow> taxis = rowRDD.map(r -> ParseRow(r));
 
         JavaPairRDD<Long, ValQ3> occurrences = taxis.mapToPair(
                 r -> new Tuple2<>(r.getDOLocationID(),
-                new ValQ3(r.getPassenger_count(),r.getFare_amount(),1)));
+                        new ValQ3(r.getPassenger_count(), r.getFare_amount(), 1)));
 
         JavaPairRDD<Long, ValQ3> reduced = occurrences.reduceByKey((Function2<ValQ3, ValQ3, ValQ3>) (v1, v2) -> {
-            Double pass = v1.getPassengers()+v2.getPassengers();
-            Double fare = v1.getFare()+v2.getFare();
-            Integer occ = v1.getOccurrences()+v2.getOccurrences();
-            ValQ3 v = new ValQ3(pass,fare,occ);
+            Double pass = v1.getPassengers() + v2.getPassengers();
+            Double fare = v1.getFare() + v2.getFare();
+            Integer occ = v1.getOccurrences() + v2.getOccurrences();
+            ValQ3 v = new ValQ3(pass, fare, occ);
             return v;
         });
         //System.out.println(reduced.count());
@@ -142,11 +146,11 @@ public class Testing {
         JavaPairRDD<Long, ValQ3> statistics = reduced.mapToPair(
                 r -> {
                     Integer num_occurrences = r._2().getOccurrences();
-                    Double pass_mean = r._2().getPassengers()/num_occurrences;
-                    Double fare_mean = r._2().getFare()/num_occurrences;
+                    Double pass_mean = r._2().getPassengers() / num_occurrences;
+                    Double fare_mean = r._2().getFare() / num_occurrences;
 
                     return new Tuple2<>(r._1(),
-                    new ValQ3(pass_mean,fare_mean,num_occurrences));
+                            new ValQ3(pass_mean, fare_mean, num_occurrences));
                 });
         statistics.foreach((VoidFunction<Tuple2<Long, ValQ3>>) r->System.out.println(r.toString()));
 
@@ -165,6 +169,7 @@ public class Testing {
 
                     return new Tuple2<>(r._1(), r._2()._2());
                 });
+        // iterations.foreach((VoidFunction<Tuple2<Long, ValQ3>>) r-> System.out.println(r));
 
         JavaPairRDD<Long, ValQ3> stddev_aggr = iterations.reduceByKey((Function2<ValQ3, ValQ3, ValQ3>) (v1, v2) -> {
             Double fare_total_stddev = v1.getFare_stddev()+v2.getFare_stddev();
@@ -179,6 +184,8 @@ public class Testing {
                     Double fare_dev  = Math.sqrt(r._2().getFare_stddev()/n);
                     Double pass_mean = r._2().getPassengers();
                     ValQ3 v = new ValQ3(pass_mean,fare_mean,n,fare_dev);
+        // joined = JavaPairRDD<Long, Tuple2<ValQ3, ValQ3>
+        //joined.foreach((VoidFunction<Tuple2<Long, Tuple2<ValQ3, ValQ3>>>) r -> System.out.println(r.toString()));
 
                     return new Tuple2<>(r._1(),v);
                 });
@@ -190,26 +197,24 @@ public class Testing {
 
         /*
         JavaPairRDD<Integer,Long> swapped = reduced.mapToPair(x -> new Tuple2<>(x._2(), x._1()));
+        JavaPairRDD<Integer, Tuple4<Long, Double, Double, Double>> swapped = deviation.mapToPair(
+                x -> new Tuple2<>(x._2().getOccurrences(), new Tuple4<>(x._1(), x._2().getPassengers(), x._2().getFare(), x._2().getFare_stddev())));
         System.out.println("\n\nSWAPPED");
-        swapped.foreach(data -> {
-            System.out.println("occurrences=" + data._1() + " DOLocationID=" + data._2());
-        });
+        swapped.foreach((VoidFunction<Tuple2<Integer, Tuple4<Long, Double, Double, Double>>>) r-> System.out.println(r));
+/*
+        JavaPairRDD<ValQ3, Long> sorted = swapped.sortByKey((o1, o2) -> o1.getOccurrences().compareTo(o2.getOccurrences()));
 
-
-
-        JavaPairRDD<Integer,Long> sorted = swapped.sortByKey(false);
-        System.out.println("\n\nSORTED");
-        sorted.foreach(data -> {
-            System.out.println("occurrences=" + data._1() + " DOLocationID=" + data._2());
-        });
-
-        List<Tuple2<Integer,Long>> top = sorted.take(5);
+       System.out.println("\n\nSORTED");
+       sorted.foreach((VoidFunction<Tuple2<ValQ3, Long>>) r-> System.out.println(r));
+/*
+        List<Tuple2<ValQ3, Long>> top = sorted.take(5);
         System.out.println("\n\nTOP");
         int i =0;
-        for (Tuple2<Integer,Long> t:top){
+        for (Tuple2<ValQ3, Long> t:top){
             System.out.println(String.format("%d) %d | %d",i,t._2(),t._1()));
             i++;
         }
-        */
+
+ */
     }
 }

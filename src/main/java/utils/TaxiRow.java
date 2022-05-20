@@ -3,27 +3,28 @@ package utils;
 import org.apache.spark.sql.Row;
 
 import java.sql.Timestamp;
+import java.time.format.DateTimeFormatter;
 
 public class TaxiRow {
-    private long VendorID;
-    private Timestamp tpep_pickup_datetime;
-    private Timestamp tpep_dropoff_datetime;
-    private Double passenger_count;
-    private Double trip_distance;
-    private Double RatecodeID;
-    private String store_and_fwd_flag;
-    private long PULocationID;
-    private long DOLocationID;
-    private long payment_type;
-    private Double fare_amount;
-    private Double extra;
-    private Double mta_tax;
-    private Double tip_amount;
-    private Double tolls_amount;
-    private Double improvement_surcharge;
-    private Double total_amount;
-    private Double congestion_surcharge;
-    private Double airport_fee;
+    long VendorID;
+    Timestamp tpep_pickup_datetime;
+    Timestamp tpep_dropoff_datetime;
+    Double passenger_count;
+    Double trip_distance;
+    Double RatecodeID;
+    String store_and_fwd_flag;
+    long PULocationID;
+    long DOLocationID;
+    long payment_type;
+    Double fare_amount;
+    Double extra;
+    Double mta_tax;
+    Double tip_amount;
+    Double tolls_amount;
+    Double improvement_surcharge;
+    Double total_amount;
+    Double congestion_surcharge;
+    Double airport_fee;
 
     public TaxiRow() {
     }
@@ -213,32 +214,6 @@ public class TaxiRow {
     public void setAirport_fee(Double airport_fee) {
         this.airport_fee = airport_fee;
     }
-
-    public static TaxiRow parseRow(Row r) {
-        TaxiRow t = new TaxiRow();
-        try {
-            t.setVendorID(r.getLong(0));
-            t.setTpep_pickup_datetime(r.getTimestamp(1));
-            t.setTpep_dropoff_datetime(r.getTimestamp(2));
-            t.setPassenger_count(r.getDouble(3));
-            t.setTrip_distance(r.getDouble(4));
-            t.setRatecodeID(r.getDouble(5));
-            t.setStore_and_fwd_flag(r.getString(6));
-            t.setPULocationID(r.getLong(7));
-            t.setDOLocationID(r.getLong(8));
-            t.setPayment_type(r.getLong(9));
-            t.setFare_amount(r.getDouble(10));
-            t.setExtra(r.getDouble(11));
-            t.setMta_tax(r.getDouble(12));
-            t.setTip_amount(r.getDouble(13));
-            t.setTolls_amount(r.getDouble(14));
-            t.setImprovement_surcharge(r.getDouble(15));
-            t.setTotal_amount(r.getDouble(16));
-            t.setCongestion_surcharge(r.getDouble(17));
-            t.setAirport_fee(r.getDouble(18));
-        } catch (NullPointerException e) {
-            // Skip Null
-        }
-        return t;
-    }
 }
+
+

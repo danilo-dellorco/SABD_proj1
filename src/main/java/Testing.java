@@ -81,7 +81,9 @@ public class Testing {
     standard deviation, the most popular payment
     method, in 1-hour slots
      */
-    public static void query2() {
+    public static void query2(SparkSession spark, String dataset) {
+        JavaRDD<Row> rowRDD = spark.read().option("header", "false").parquet(dataset).toJavaRDD();
+        JavaRDD<TaxiRow> taxis = rowRDD.map(r -> ParseRow(r));
 
     }
 
@@ -118,7 +120,7 @@ public class Testing {
                     return new Tuple2<>(r._1(),
                             new ValQ3(pass_mean, fare_mean, num_occurrences));
                 });
-        statistics.foreach((VoidFunction<Tuple2<Long, ValQ3>>) r->System.out.println(r.toString()));
+        statistics.foreach((VoidFunction<Tuple2<Long, ValQ3>>) r -> System.out.println(r.toString()));
 
         JavaPairRDD<Long, Tuple2<ValQ3, ValQ3>> joined = occurrences.join(statistics);
 
@@ -131,8 +133,8 @@ public class Testing {
         JavaPairRDD<Long, ValQ3> iterations = joined.mapToPair(
                 r -> {
                     Double fare_mean = r._2()._2().getFare();
-                    Double fare_val  = r._2()._1().getFare();
-                    Double fare_dev  = Math.pow((fare_val-fare_mean),2);
+                    Double fare_val = r._2()._1().getFare();
+                    Double fare_dev = Math.pow((fare_val - fare_mean), 2);
                     r._2()._2().setFare_stddev(fare_dev);
 
                     return new Tuple2<>(r._1(), r._2()._2());
@@ -140,8 +142,8 @@ public class Testing {
         // iterations.foreach((VoidFunction<Tuple2<Long, ValQ3>>) r-> System.out.println(r));
 
         JavaPairRDD<Long, ValQ3> stddev_aggr = iterations.reduceByKey((Function2<ValQ3, ValQ3, ValQ3>) (v1, v2) -> {
-            Double fare_total_stddev = v1.getFare_stddev()+v2.getFare_stddev();
-            ValQ3 v = new ValQ3(v1.getPassengers(),v1.getFare(),v1.getOccurrences(),fare_total_stddev);
+            Double fare_total_stddev = v1.getFare_stddev() + v2.getFare_stddev();
+            ValQ3 v = new ValQ3(v1.getPassengers(), v1.getFare(), v1.getOccurrences(), fare_total_stddev);
             return v;
         });
 
@@ -149,18 +151,17 @@ public class Testing {
                 r -> {
                     Double fare_mean = r._2().getFare();
                     Integer n = r._2().getOccurrences();
-                    Double fare_dev  = Math.sqrt(r._2().getFare_stddev()/n);
+                    Double fare_dev = Math.sqrt(r._2().getFare_stddev() / n);
                     Double pass_mean = r._2().getPassengers();
-                    ValQ3 v = new ValQ3(pass_mean,fare_mean,n,fare_dev);
-        // joined = JavaPairRDD<Long, Tuple2<ValQ3, ValQ3>
-        //joined.foreach((VoidFunction<Tuple2<Long, Tuple2<ValQ3, ValQ3>>>) r -> System.out.println(r.toString()));
+                    ValQ3 v = new ValQ3(pass_mean, fare_mean, n, fare_dev);
+                    // joined = JavaPairRDD<Long, Tuple2<ValQ3, ValQ3>
+                    //joined.foreach((VoidFunction<Tuple2<Long, Tuple2<ValQ3, ValQ3>>>) r -> System.out.println(r.toString()));
 
-                    return new Tuple2<>(r._1(),v);
+                    return new Tuple2<>(r._1(), v);
                 });
 
         System.out.println("DEVIATIOOOOOON");
-        deviation.foreach((VoidFunction<Tuple2<Long, ValQ3>>) r->System.out.println(r.toString()));
-        deviation.foreach((VoidFunction<Tuple2<Long, ValQ3>>) r->System.out.println(r.toString()));
+        deviation.foreach((VoidFunction<Tuple2<Long, ValQ3>>) r -> System.out.println(r.toString()));
 
         JavaPairRDD<Integer, Tuple4<Long, Double, Double, Double>> sorted = deviation
                 .mapToPair( x -> new Tuple2<>(x._2().getOccurrences(),
@@ -170,21 +171,12 @@ public class Testing {
         System.out.println("\n\nSORTED");
         sorted.foreach((VoidFunction<Tuple2<Integer, Tuple4<Long, Double, Double, Double>>>) r-> System.out.println(r));
 
-
-/*
-        JavaPairRDD<ValQ3, Long> sorted = swapped.sortByKey((o1, o2) -> o1.getOccurrences().compareTo(o2.getOccurrences()));
-
-       System.out.println("\n\nSORTED");
-       sorted.foreach((VoidFunction<Tuple2<ValQ3, Long>>) r-> System.out.println(r));
-/*
-        List<Tuple2<ValQ3, Long>> top = sorted.take(5);
+        List<Tuple2<Integer, Tuple4<Long, Double, Double, Double>>> top = sorted.take(5);
         System.out.println("\n\nTOP");
-        int i =0;
-        for (Tuple2<ValQ3, Long> t:top){
-            System.out.println(String.format("%d) %d | %d",i,t._2(),t._1()));
+        int i = 1;
+        for (Tuple2<Integer, Tuple4<Long, Double, Double, Double>> t : top) {
+            System.out.println(String.format("%d) %d | %d", i, t._2()._1(), t._1()));
             i++;
         }
-
- */
     }
 }

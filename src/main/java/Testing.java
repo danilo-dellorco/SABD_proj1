@@ -30,7 +30,8 @@ public class Testing {
     private static String dataset2_path = hdfsURL + "/yellow_tripdata_2022-01.parquet";
     private static String dataset3_path = hdfsURL + "/yellow_tripdata_2022-02.parquet";
 
-    //TODO vedere il caching
+    //TODO vedere il caching per gli RDD riacceduti
+    // TODO scrivere gli output su file HDFS
     public static void main(String[] args) {
         SparkSession spark = SparkSession
                 .builder()
@@ -94,8 +95,9 @@ public class Testing {
     standard deviation of Fare_amount
     */
     public static void query3(SparkSession spark, String dataset) {
+        //TODO la fase di filter forse va fatta nel pre-processamento rimuovendo le righe vuote
         JavaRDD<Row> rowRDD = spark.read().option("header", "false").parquet(dataset).toJavaRDD();
-        JavaRDD<TaxiRow> taxis = rowRDD.map(r -> ParseRow(r));
+        JavaRDD<TaxiRow> taxis = rowRDD.map(r -> ParseRow(r)).filter(v1->v1.getDOLocationID()!=0);
 
         JavaPairRDD<Long, ValQ3> occurrences = taxis.mapToPair(
                 r -> new Tuple2<>(r.getDOLocationID(),

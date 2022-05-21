@@ -3,7 +3,9 @@ package utils;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.VoidFunction;
 import org.apache.spark.sql.Row;
+import scala.Tuple2;
 
+import java.sql.Timestamp;
 import java.util.Scanner;
 
 public class Tools {

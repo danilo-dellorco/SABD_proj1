@@ -18,7 +18,6 @@ import static utils.Tools.ParseRow;
 
 
 public class Query1 extends Query {
-    private static List query1_results = new ArrayList();
 
     public Query1(SparkSession spark, JavaRDD<Row> dataset) {
         super(spark, dataset);
@@ -41,7 +40,7 @@ public class Query1 extends Query {
             v.setTolls_amount(tolls);
             return v;
         });
-d    }
+    }
 
     @Override
     public void print() {

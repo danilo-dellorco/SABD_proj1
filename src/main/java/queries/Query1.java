@@ -5,9 +5,12 @@
 
 package queries;
 
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+import scala.Tuple2;
 import utils.TaxiRow;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +38,21 @@ public class Query1 extends Query {
         double tolls_amount = tolls.reduce((a, b) -> a + b);
 
         double mean = total_tips / (total_amount - tolls_amount);
+
+        JavaPairRDD<Integer, TaxiRow> taxiRows = rowRDD.mapToPair(
+                r -> new Tuple2<>(r.getTimestamp(1).getMonth(),
+                        ParseRow(r)));
+
+        JavaPairRDD<Integer, TaxiRow> reduced = taxiRows.foldByKey(new TaxiRow(), (Function2<TaxiRow, TaxiRow, TaxiRow>) (v1, v2) -> {
+            Double tips = v1.getTip_amount() + v2.getTip_amount();
+            Double total = v1.getTotal_amount() + v2.getTotal_amount();
+            Double tolls = v1.getTolls_amount() + v2.getTolls_amount();
+            TaxiRow v = new TaxiRow();
+            v.setTip_amount(tips);
+            v.setTotal_amount(total);
+            v.setTolls_amount(tolls);
+            return v;
+        });
 
         query1_results.add(mean);
     }

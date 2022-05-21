@@ -2,10 +2,11 @@ package utils;
 
 import org.apache.spark.sql.Row;
 
+import java.io.Serializable;
 import java.sql.Timestamp;
 import java.time.format.DateTimeFormatter;
 
-public class TaxiRow {
+public class TaxiRow implements Serializable {
     long VendorID;
     Timestamp tpep_pickup_datetime;
     Timestamp tpep_dropoff_datetime;

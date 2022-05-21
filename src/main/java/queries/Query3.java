@@ -10,6 +10,7 @@ package queries;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function2;
+import org.apache.spark.api.java.function.VoidFunction;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import scala.Tuple2;
@@ -34,11 +35,11 @@ public class Query3 extends Query{
         //TODO la fase di filter forse va fatta nel pre-processamento rimuovendo le righe vuote
         JavaRDD<TaxiRow> taxis = dataset.map(r -> ParseRow(r)).filter(v1->v1.getDOLocationID()!=0);
 
-        JavaPairRDD<Long, ValQ3> occurrences = taxis.mapToPair(
+        JavaPairRDD<Long, ValQ3> aggregated = taxis.mapToPair(
                 r -> new Tuple2<>(r.getDOLocationID(),
                      new ValQ3(r.getPassenger_count(), r.getFare_amount(), 1)));
 
-        JavaPairRDD<Long, ValQ3> reduced = occurrences.reduceByKey((Function2<ValQ3, ValQ3, ValQ3>) (v1, v2) -> {
+        JavaPairRDD<Long, ValQ3> reduced = aggregated.reduceByKey((Function2<ValQ3, ValQ3, ValQ3>) (v1, v2) -> {
             Double pass = v1.getPassengers() + v2.getPassengers();
             Double fare = v1.getFare() + v2.getFare();
             Integer occ = v1.getOccurrences() + v2.getOccurrences();
@@ -63,12 +64,12 @@ public class Query3 extends Query{
         //statistics.foreach((VoidFunction<Tuple2<Long, ValQ3>>) r -> System.out.println(r.toString()));
 
         // Unisce ad ogni trip del taxi la media ed il numero di occorrenze totali
-        JavaPairRDD<Long, Tuple2<ValQ3, ValQ3>> joined = occurrences.join(statistics);
+        JavaPairRDD<Long, Tuple2<ValQ3, ValQ3>> joined = aggregated.join(statistics);
 
-        /*
+//        /*
         System.out.println("JOINEEEEEEED");
         joined.foreach((VoidFunction<Tuple2<Long, Tuple2<ValQ3, ValQ3>>>) r->System.out.println(r.toString()));
-        */
+//        */
 
 
         JavaPairRDD<Long, ValQ3> iterations = joined.mapToPair(
@@ -95,9 +96,6 @@ public class Query3 extends Query{
                     Double fare_dev = Math.sqrt(r._2().getFare_stddev() / n);
                     Double pass_mean = r._2().getPassengers();
                     ValQ3 v = new ValQ3(pass_mean, fare_mean, n, fare_dev);
-                    // joined = JavaPairRDD<Long, Tuple2<ValQ3, ValQ3>
-                    // joined.foreach((VoidFunction<Tuple2<Long, Tuple2<ValQ3, ValQ3>>>) r -> System.out.println(r.toString()));
-
                     return new Tuple2<>(r._1(), v);
                 });
 

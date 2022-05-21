@@ -1,17 +1,22 @@
+import org.apache.hadoop.fs.Stat;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.Optional;
 import org.apache.spark.api.java.function.VoidFunction;
+import org.apache.spark.rdd.RDD;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.api.java.function.Function2;
+import org.apache.spark.util.StatCounter;
 import scala.*;
 import utils.TaxiRow;
+import utils.Tools;
 import utils.ValQ3;
 
 import java.lang.Double;
 import java.lang.Long;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -39,9 +44,9 @@ public class Testing {
                 .appName("Java Spark SQL basic example")
                 .getOrCreate();
 
-        // QUERY 1
-        /*
         query1_month(spark, dataset1_path);
+
+        /*
         query1_month(spark, dataset2_path);
         query1_month(spark, dataset3_path);
 
@@ -51,7 +56,9 @@ public class Testing {
         }
         System.out.println("=============================================================");
          */
-        query3(spark, dataset1_path);
+
+        // QUERY 1
+//        query3(spark, dataset1_path);
         promptEnterKey();
     }
 
@@ -60,21 +67,43 @@ public class Testing {
     subset of values tip/(total amount - toll amount)
      */
     public static void query1_month(SparkSession spark, String dataset) {
-        JavaRDD<Row> rowRDD = spark.read().option("header", "false").parquet(dataset).toJavaRDD();
-        JavaRDD<TaxiRow> taxiRows = rowRDD.map(r -> ParseRow(r));
+        //TODO union dei parquet da spostare in fase di pre-processing
 
-        // Analisys of the single Month
-        JavaRDD<Double> tips = taxiRows.map(t -> t.getTip_amount());
-        JavaRDD<Double> total = taxiRows.map(t -> t.getTotal_amount());
-        JavaRDD<Double> tolls = taxiRows.map(t -> t.getTolls_amount());
+        JavaRDD<Row> RDD_1 = spark.read().option("header", "false").parquet(dataset1_path).toJavaRDD();
+        JavaRDD<Row> RDD_2 = spark.read().option("header", "false").parquet(dataset2_path).toJavaRDD();
+        JavaRDD<Row> RDD_3 = spark.read().option("header", "false").parquet(dataset3_path).toJavaRDD();
+        JavaRDD<Row> rowRDD = RDD_1
+                .union(RDD_2).union(RDD_3);
+        // Month, TaxiRow
+        JavaPairRDD<Integer, TaxiRow> taxiRows = rowRDD.mapToPair(
+                r -> new Tuple2<>(r.getTimestamp(1).getMonth(),
+                        ParseRow(r)));
 
-        double total_tips = tips.reduce((a, b) -> a + b);
-        double total_amount = total.reduce((a, b) -> a + b);
-        double tolls_amount = tolls.reduce((a, b) -> a + b);
+//        taxiRows.foreach((VoidFunction<Tuple2<Integer, TaxiRow>>) r -> System.out.println(r._1() + " " + r._2()));
 
-        double mean = total_tips / (total_amount - tolls_amount);
+        JavaPairRDD<Integer, TaxiRow> reduced = taxiRows.foldByKey(new TaxiRow(), (Function2<TaxiRow, TaxiRow, TaxiRow>) (v1, v2) -> {
+            Double tips = v1.getTip_amount() + v2.getTip_amount();
+            Double total = v1.getTotal_amount() + v2.getTotal_amount();
+            Double tolls = v1.getTolls_amount() + v2.getTolls_amount();
+            TaxiRow v = new TaxiRow();
+            v.setTip_amount(tips);
+            v.setTotal_amount(total);
+            v.setTolls_amount(tolls);
+            return v;
+        });
 
-        query1_results.add(mean);
+        reduced.foreach((VoidFunction<Tuple2<Integer, TaxiRow>>) r-> System.out.println(r._1() + " "+ r._2()));
+/*
+        JavaPairRDD<Integer, Double> result = reduced.mapToPair(
+             r -> {
+                 double mean = r._2().getTip_amount() / (r._2().getTotal_amount() - r._2().getTolls_amount());
+
+        return new Tuple2<>(r._1(), new Double(mean));
+    });
+
+        result.foreach((VoidFunction<Tuple2<Integer, Double>>) r -> System.out.println(r._1() + " "+r._2()));
+
+         */
     }
 
     /*
@@ -84,7 +113,7 @@ public class Testing {
      */
     public static void query2(SparkSession spark, String dataset) {
         JavaRDD<Row> rowRDD = spark.read().option("header", "false").parquet(dataset).toJavaRDD();
-        JavaRDD<TaxiRow> taxis = rowRDD.map(r -> ParseRow(r));
+//        JavaRDD<TaxiRow> taxis = rowRDD.map(r -> ParseRow(r));
 
     }
 

@@ -30,7 +30,7 @@ public class Query1 extends Query {
                 r -> new Tuple2<>(r.getTimestamp(1).getMonth(),
                         ParseRow(r)));
 
-        JavaPairRDD<Integer, TaxiRow> reduced = taxiRows.foldByKey(new TaxiRow(), (Function2<TaxiRow, TaxiRow, TaxiRow>) (v1, v2) -> {
+        JavaPairRDD<Integer, TaxiRow> reduced = taxiRows.reduceByKey((Function2<TaxiRow, TaxiRow, TaxiRow>) (v1, v2) -> {
             Double tips = v1.getTip_amount() + v2.getTip_amount();
             Double total = v1.getTotal_amount() + v2.getTotal_amount();
             Double tolls = v1.getTolls_amount() + v2.getTolls_amount();

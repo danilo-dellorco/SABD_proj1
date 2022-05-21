@@ -26,20 +26,8 @@ public class Query1 extends Query {
 
     @Override
     public void execute() {
-        JavaRDD<TaxiRow> taxiRows = dataset.map(r -> ParseRow(r));
 
-        // Analisys of the single Month
-        JavaRDD<Double> tips = taxiRows.map(t -> t.getTip_amount());
-        JavaRDD<Double> total = taxiRows.map(t -> t.getTotal_amount());
-        JavaRDD<Double> tolls = taxiRows.map(t -> t.getTolls_amount());
-
-        double total_tips = tips.reduce((a, b) -> a + b);
-        double total_amount = total.reduce((a, b) -> a + b);
-        double tolls_amount = tolls.reduce((a, b) -> a + b);
-
-        double mean = total_tips / (total_amount - tolls_amount);
-
-        JavaPairRDD<Integer, TaxiRow> taxiRows = rowRDD.mapToPair(
+        JavaPairRDD<Integer, TaxiRow> taxiRows = dataset.mapToPair(
                 r -> new Tuple2<>(r.getTimestamp(1).getMonth(),
                         ParseRow(r)));
 
@@ -53,9 +41,7 @@ public class Query1 extends Query {
             v.setTolls_amount(tolls);
             return v;
         });
-
-        query1_results.add(mean);
-    }
+d    }
 
     @Override
     public void print() {

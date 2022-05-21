@@ -22,8 +22,8 @@ public class Main {
         turnOffLogger();
 
         Query1 q1 = new Query1(spark, datasetRDD);
-        Query2 q2 = new Query2(spark, datasetRDD);
-        Query3 q3 = new Query3(spark, datasetRDD);
+//        Query2 q2 = new Query2(spark, datasetRDD);
+//        Query3 q3 = new Query3(spark, datasetRDD);
 
 //        q1.execute();
         q2.execute();
@@ -49,6 +49,7 @@ public class Main {
     }
 
     public static JavaRDD<Row> loadDataset() {
+
         JavaRDD<Row> rows1 = spark.read().option("header", "false").parquet(Config.DAT1_PATH).toJavaRDD();
         JavaRDD<Row> rows2 = spark.read().option("header", "false").parquet(Config.DAT2_PATH).toJavaRDD();
         JavaRDD<Row> rows3 = spark.read().option("header", "false").parquet(Config.DAT3_PATH).toJavaRDD();

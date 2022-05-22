@@ -6,6 +6,9 @@ import org.apache.spark.sql.Row;
 import scala.Tuple2;
 
 import java.sql.Timestamp;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Scanner;
 
 public class Tools {
@@ -46,5 +49,33 @@ public class Tools {
             // Ignore rows with null fields
         }
         return t;
+    }
+
+    public static void iterateUsingIteratorAndEntry(Map<Tuple2<Integer, Long>,Long> map) {
+        Iterator<Map.Entry<Tuple2<Integer, Long>, Long>> iterator = map.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<Tuple2<Integer, Long>, Long> entry = iterator.next();
+            System.out.println(entry.getKey() + ":" + entry.getValue());
+        }
+    }
+
+    // INT, [
+    // (21,[((21,2),83804), ((21,1),363937), ((21,0),13031), ((21,3),2000), ((21,4),2044)])
+    public static Tuple2<Long,Integer> getMostFrequentFromIterable(Iterable<Tuple2<Tuple2<Integer, Long>, Integer>> list) {
+        Iterator<Tuple2<Tuple2<Integer, Long>, Integer>> iterator = list.iterator();
+
+        Tuple2<Integer,Long> max = null;
+        Integer maxVal = 0;
+
+        while (iterator.hasNext()){
+            Tuple2<Tuple2<Integer, Long>, Integer> element = iterator.next();
+            Tuple2<Integer,Long>  actual = element._1();
+            Integer actualVal = element._2();
+            if (actualVal>=maxVal){
+                maxVal=actualVal;
+                max = actual;
+            }
+        }
+        return new Tuple2<>(max._2(),maxVal);
     }
 }

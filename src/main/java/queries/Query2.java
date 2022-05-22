@@ -8,6 +8,7 @@ package queries;
 
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.VoidFunction;
 import org.apache.spark.sql.Row;
@@ -18,8 +19,12 @@ import utils.ValQ2;
 import utils.ValQ3;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
-import static utils.Tools.ParseRow;
+import java.util.Map;
+import java.util.function.BiConsumer;
+
+import static utils.Tools.*;
 
 public class Query2 extends Query{
     public int HOUR_OF_DAY = 24;
@@ -37,7 +42,33 @@ public class Query2 extends Query{
         // Total tips in every hour slot: (Hour, tips), we assume people pay on arrival
         JavaPairRDD<Integer, ValQ2> aggregated = trips.mapToPair(r ->
                     new Tuple2<>(r.getTpep_dropoff_datetime().toLocalDateTime().getHour(),
-                    new ValQ2(r.getTip_amount(), r.getPayment_type(),1)));
+                    new ValQ2(r.getTip_amount(), r.getPayment_type(),1))).sortByKey();
+        //TODO .cache() credo
+
+//        aggregated.foreach((VoidFunction<Tuple2<Integer, ValQ2>>) r-> System.out.println(r.toString()));
+
+        JavaPairRDD<Tuple2<Integer, Long>,Integer> aggr_pay = aggregated.mapToPair(r ->
+                new Tuple2<>(
+                        new Tuple2 <>(
+                                r._1(),
+                                r._2().getPayment_type())
+                ,1));
+
+        JavaPairRDD<Tuple2<Integer, Long>,Integer> red_pay = aggr_pay.reduceByKey((Function2<Integer, Integer, Integer>) (v1, v2) -> {
+            Integer occ = v1+ v2;
+            return occ;
+        });
+
+        //TODO prendere il max dall'iterable ed è finito
+        JavaPairRDD<Integer, Iterable<Tuple2<Tuple2<Integer, Long>, Integer>>> grouped = red_pay.groupBy((Function<Tuple2<Tuple2<Integer, Long>, Integer>, Integer>) r -> r._1()._1());
+//        grouped.foreach((VoidFunction<Tuple2<Integer, Iterable<Tuple2<Tuple2<Integer, Long>, Integer>>>>) r-> System.out.println(r.toString()));
+
+        JavaPairRDD<Integer,Tuple2<Long,Integer>> rdd_boh = grouped.mapToPair(r ->
+                new Tuple2<>(
+                        r._1(),
+                        getMostFrequentFromIterable(r._2())
+                ));
+//        rdd_boh.sortByKey().foreach((VoidFunction<Tuple2<Integer, Tuple2<Long, Integer>>>) r-> System.out.println(r.toString()));
 
         JavaPairRDD<Integer, ValQ2> reduced = aggregated.reduceByKey((Function2<ValQ2, ValQ2, ValQ2>) (v1, v2) -> {
             Double tips = v1.getTips() + v2.getTips();
@@ -86,39 +117,10 @@ public class Query2 extends Query{
                     return new Tuple2<>(r._1(), v);
                 });
 
-        deviation.sortByKey(false).foreach((VoidFunction<Tuple2<Integer, ValQ2>>) r -> System.out.println(r.toString()));
+//        deviation.sortByKey(false).foreach((VoidFunction<Tuple2<Integer, ValQ2>>) r -> System.out.println(r.toString()));
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*        // Total methods used in every hour slot: (occurrences, method_type)
-        JavaPairRDD<Integer, Long> types = trips.mapToPair(row ->
-                        new Tuple2<>(row.getTpep_dropoff_datetime().toLocalDateTime().getHour(), row.getPayment_type()))
-//                .sortByKey(true).cache();   // caching because we use multiple time this RDD
-        for (int i=0; i<HOUR_OF_DAY; i++) {
-            int hour = i;
-            JavaPairRDD<Integer, Long> methods = types.filter(row -> row._1().equals(hour))
-                    .mapToPair(row -> new Tuple2<>(row._2(), 1)).reduceByKey(Integer::sum)
-                    .mapToPair(row -> new Tuple2<>(row._2(), row._1())).sortByKey(false);
-            methods.foreach(row -> System.out.println("Hour: " + hour + " Method:" + row._2()
-                    + " | Occurrences: " + row._1()));
-            List<Tuple2<Integer,Long>> top = methods.take(1);
-            query2_methods.add(top.get(0));
-        }*/
+        JavaPairRDD<Integer, Tuple2<ValQ2, Tuple2<Long, Integer>>> final_joined = deviation.sortByKey().join(rdd_boh);
+        final_joined.sortByKey().foreach((VoidFunction<Tuple2<Integer, Tuple2<ValQ2, Tuple2<Long, Integer>>>>) r-> System.out.println(r.toString()));
     }
 
     @Override

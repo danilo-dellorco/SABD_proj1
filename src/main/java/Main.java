@@ -21,8 +21,8 @@ public class Main {
     public static void main(String[] args) {
         turnOffLogger();
 
-        Query1 q1 = new Query1(spark, datasetRDD);
-//        Query2 q2 = new Query2(spark, datasetRDD);
+//        Query1 q1 = new Query1(spark, datasetRDD);
+        Query2 q2 = new Query2(spark, datasetRDD);
 //        Query3 q3 = new Query3(spark, datasetRDD);
 
 //        q1.execute();

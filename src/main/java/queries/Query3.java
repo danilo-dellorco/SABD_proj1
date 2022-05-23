@@ -7,12 +7,16 @@
 
 package queries;
 
+import com.mongodb.client.FindIterable;
+import com.mongodb.client.MongoCollection;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.VoidFunction;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+import org.bson.Document;
+import org.bson.conversions.Bson;
 import scala.Tuple2;
 import scala.Tuple4;
 import utils.TaxiRow;
@@ -32,8 +36,8 @@ import static utils.Tools.ParseRow;
 
 public class Query3 extends Query{
 
-    public Query3(SparkSession spark, JavaRDD<Row> dataset) {
-        super(spark, dataset);
+    public Query3(SparkSession spark, JavaRDD<Row> dataset, MongoCollection collection) {
+        super(spark, dataset, collection);
     }
 
 
@@ -102,23 +106,22 @@ public class Query3 extends Query{
 
         String res = "";
         for (Tuple2<Integer, Tuple4<Long, Double, Double, Double>> t : top) {
-            Integer id = Math.toIntExact(t._2()._1());
-            String zoneName =  Zone.zoneMap.get(id);
+            Integer zoneId = Math.toIntExact(t._2()._1());
+            String zoneName =  Zone.zoneMap.get(zoneId);
             Integer occ = t._1();
-            res = res+String.format("%d;%s;%d\n", id,zoneName,occ);
-        }
-        System.out.println(res);
-        try {
-            File file = new File("output/query3/res.csv");
-            file.getParentFile().mkdirs();
-            file.createNewFile();
-            PrintWriter writer = new PrintWriter(file);
-            writer.write(res);
-            writer.close();
-        } catch (Exception e ) {
-            e.printStackTrace();
-        }
 
+            Document document = new Document();
+            document.append("zone_id", zoneId);
+            document.append("zone_name", zoneName);
+            document.append("occurrences", occ);
+
+            collection.insertOne(document);
+
+        }
+        FindIterable<Document> docs = collection.find();
+        for (Document doc:docs) {
+            System.out.println(doc);
+        }
 /*        System.out.println("========================== QUERY 3 ==========================");
         int i = 1;
         for (Tuple2<Integer, Tuple4<Long, Double, Double, Double>> t : top) {

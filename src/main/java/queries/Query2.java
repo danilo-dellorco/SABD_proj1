@@ -6,6 +6,8 @@
 
 package queries;
 
+import com.mongodb.client.FindIterable;
+import com.mongodb.client.MongoCollection;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
@@ -13,6 +15,7 @@ import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.VoidFunction;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+import org.bson.Document;
 import scala.Tuple2;
 import utils.Payments;
 import utils.TaxiRow;
@@ -24,12 +27,11 @@ import java.util.List;
 import static utils.Tools.*;
 
 public class Query2 extends Query{
-    public int HOUR_OF_DAY = 24;
     private static List query2_mean = new ArrayList();
     private static List<Tuple2<Integer,Long>> query2_methods = new ArrayList();
 
-    public Query2(SparkSession spark, JavaRDD<Row> dataset) {
-        super(spark, dataset);
+    public Query2(SparkSession spark, JavaRDD<Row> dataset, MongoCollection collection) {
+        super(spark, dataset, collection);
     }
 
     public void execute() {
@@ -133,8 +135,34 @@ public class Query2 extends Query{
                 .join(top_payments)
                 .sortByKey();
 
+        List<Tuple2<Integer, Tuple2<ValQ2, Tuple2<Long, Integer>>>> result = final_joined.collect();
 
-        // CSV LINE := time_slot, tips_mean, tips_dev, top_payment_type, top_payment_name, top_payment_tot
+        for (Tuple2<Integer, Tuple2<ValQ2, Tuple2<Long, Integer>>> r:result) {
+            Integer slot = r._1();
+            Double mean = r._2()._1().getTips();
+            Double stdev = r._2()._1().getTips_stddev();
+            Integer payment_id = Math.toIntExact(r._2()._2()._1());
+            String payment_name =  Payments.staticMap.get(payment_id);
+            Integer payment_occ = r._2()._2()._2();
+
+            Document document = new Document();
+            document.append("hour_slot", slot);
+            document.append("tips_mean", mean);
+            document.append("tips_stdev", stdev);
+            document.append("top_payment", payment_id);
+            document.append("payment_name", payment_name);
+            document.append("payment_occ", payment_occ);
+
+            collection.insertOne(document);
+
+        }
+        FindIterable<Document> docs = collection.find();
+        for (Document doc:docs) {
+            System.out.println(doc);
+
+        }
+
+/*        // CSV LINE := time_slot, tips_mean, tips_dev, top_payment_type, top_payment_name, top_payment_tot
         JavaRDD<String> result = final_joined.map((Function<Tuple2<Integer, Tuple2<ValQ2, Tuple2<Long, Integer>>>, String>)
                                 r -> {
             Integer id = Math.toIntExact(r._2()._2()._1());
@@ -143,7 +171,7 @@ public class Query2 extends Query{
                     return String.format("%d;%f;%f;%d;%s;%d",r._1(),r._2()._1().getTips(),r._2()._1().getTips_stddev(),id,name,r._2()._2()._2());
                 });
 
-        result.saveAsTextFile("output/query2");
+        result.saveAsTextFile("output/query2");*/
     }
 
     @Override

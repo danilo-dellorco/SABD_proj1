@@ -5,6 +5,7 @@
 
 package queries;
 
+import com.mongodb.client.MongoCollection;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function2;
@@ -23,18 +24,16 @@ import static utils.Tools.ParseRow;
 
 public class Query1 extends Query {
 
-    public Query1(SparkSession spark, JavaRDD<Row> dataset) {
-        super(spark, dataset);
+    public Query1(SparkSession spark, JavaRDD<Row> dataset, MongoCollection collection) {
+        super(spark, dataset, collection);
     }
 
     @Override
     public void execute() {
 
         JavaPairRDD<Integer, TaxiRow> taxiRows = dataset.mapToPair(
-                r -> {
-                    return new Tuple2<>(r.getTimestamp(2).getMonth(),
-                            ParseRow(r));
-                });
+                r -> new Tuple2<>(r.getTimestamp(2).getMonth(),
+                        ParseRow(r)));
 
 //        taxiRows.foreach((VoidFunction<Tuple2<Integer, TaxiRow>>) r -> System.out.println(r));
 

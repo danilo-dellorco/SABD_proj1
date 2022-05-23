@@ -1,2 +1,2 @@
 #!/bin/bash
-docker run --rm -t -i --network=mongonet --name=mongo_client mongo:latest /bin/bash
+docker run -i -t --name mongo_cli --network=mongonet mongo:latest /bin/bash

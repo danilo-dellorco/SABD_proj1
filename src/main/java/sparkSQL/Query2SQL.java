@@ -1,5 +1,6 @@
 package sparkSQL;
 
+import com.mongodb.client.MongoCollection;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.sql.Dataset;
@@ -16,8 +17,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Query2SQL extends Query {
-    public Query2SQL(SparkSession spark, JavaRDD<Row> dataset) {
-        super(spark, dataset);
+    public Query2SQL(SparkSession spark, JavaRDD<Row> dataset, MongoCollection collection) {
+        super(spark, dataset, collection);
     }
 
     public Dataset<Row> createSchemaFromRDD(SparkSession spark, JavaRDD<Row> dataset) {

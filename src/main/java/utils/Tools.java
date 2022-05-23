@@ -5,7 +5,7 @@ import org.apache.spark.api.java.function.VoidFunction;
 import org.apache.spark.sql.Row;
 import scala.Tuple2;
 
-import java.sql.Timestamp;
+import java.util.Iterator;
 import java.util.Scanner;
 
 public class Tools {
@@ -13,6 +13,9 @@ public class Tools {
         taxiRows.foreach((VoidFunction<TaxiRow>) r->System.out.println(r.toString()));
     }
 
+    /**
+     * Mette in attesa il programma fino all'inserimento di input utente
+     */
     public static void promptEnterKey() {
         System.out.println("Running Spark WebUI on http://localhost:4040/jobs/");
         System.out.println("Double press \"ENTER\" to end application...");
@@ -20,6 +23,11 @@ public class Tools {
         scanner.nextLine();
     }
 
+    /**
+     * Genera un oggetto TaxiRow partendo da un Row generico del file parquet
+     * @param r
+     * @return
+     */
     public static TaxiRow ParseRow(Row r) {
         TaxiRow t = new TaxiRow();
         try {
@@ -36,4 +44,32 @@ public class Tools {
         }
         return t;
     }
+
+    /**
+     * Ritorna la tupla (method,occurrences) relativa al metodo di pagamento più usata nella fascia oraria
+     * @param list
+     * @return
+     */
+    public static Tuple2<Long,Integer> getMostFrequentFromIterable(Iterable<Tuple2<Tuple2<Integer, Long>, Integer>> list) {
+        Iterator<Tuple2<Tuple2<Integer, Long>, Integer>> iterator = list.iterator();
+
+        Tuple2<Integer,Long> max = null;
+        Integer maxVal = 0;
+
+        while (iterator.hasNext()){
+            Tuple2<Tuple2<Integer, Long>, Integer> element = iterator.next();
+            Tuple2<Integer,Long>  actual = element._1();
+            Integer actualVal = element._2();
+            if (actualVal>=maxVal){
+                maxVal=actualVal;
+                max = actual;
+            }
+        }
+        return new Tuple2<>(max._2(),maxVal);
+    }
+
+    public static String toCSVLine(){
+        return "";
+    }
+
 }

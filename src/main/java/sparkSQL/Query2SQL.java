@@ -42,14 +42,20 @@ public class Query2SQL extends Query {
         data.createOrReplaceTempView("trip_infos");
 
         Dataset<Row> values = spark.sql("SELECT HOUR(tpep_dropoff_datatime) AS hour_slot, AVG(tip) AS tip_avg, STDDEV_POP(tip) AS tip_stddev " +
-                "FROM trip_infos GROUP BY HOUR(tpep_dropoff_datatime)");
+                "FROM trip_infos GROUP BY HOUR(tpep_dropoff_datatime) ORDER BY hour(tpep_dropoff_datatime) ASC");
+        values.createOrReplaceTempView("values");
 
         Dataset<Row> paymentOccurrences = spark.sql("SELECT HOUR(tpep_dropoff_datatime) AS hour_slot, payment_type, COUNT(*) AS counted FROM trip_infos GROUP BY HOUR(tpep_dropoff_datatime), payment_type");
         paymentOccurrences.createOrReplaceTempView("occurrences");
-        paymentOccurrences.show();
 
-        spark.sql("SELECT hour_slot, payment_type, counted AS counted FROM occurrences").show();
+        Dataset<Row> mostPopularPaymentType = spark.sql("SELECT hour_slot, payment_type, counted FROM occurrences table_1 WHERE counted =" +
+                "(SELECT MAX(counted) FROM occurrences WHERE hour_slot = table_1.hour_slot) ORDER BY hour_slot ASC");
 
+        mostPopularPaymentType.createOrReplaceTempView("mostPaymentType");
+
+        Dataset<Row> results = spark.sql("SELECT mostPaymentType.hour_slot, payment_type, counted, tip_avg, tip_stddev " +
+                "FROM mostPaymentType JOIN values ON mostPaymentType.hour_slot = values.hour_slot ORDER BY mostPaymentType.hour_slot ASC");
+        results.show();
     }
 
     @Override

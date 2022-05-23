@@ -1,6 +1,6 @@
 /**
- *  Average calculation on a monthly basis and on a
- *  subset of values tip/(total amount - toll amount)
+ * Average calculation on a monthly basis and on a
+ * subset of values tip/(total amount - toll amount)
  */
 
 package queries;
@@ -16,8 +16,11 @@ import scala.Tuple2;
 import scala.Tuple3;
 import utils.Month;
 import utils.TaxiRow;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
 import static utils.Tools.ParseRow;
 //TODO Ci stanno dei dati con mesi diversi da Dicembre-Gennaio-Febbraio
 
@@ -32,10 +35,9 @@ public class Query1 extends Query {
 
         JavaPairRDD<Integer, TaxiRow> taxiRows = dataset.mapToPair(
                 r -> {
-                    return new Tuple2<>(r.getTimestamp(2).getMonth(),
+                    return new Tuple2<>(r.getTimestamp(0).getMonth(),
                             ParseRow(r));
                 });
-
 //        taxiRows.foreach((VoidFunction<Tuple2<Integer, TaxiRow>>) r -> System.out.println(r));
 
         // TODO valutare creazione classe ValQ1, perchè usando TaxiRow dovremmo settare anche tutti gli altri campi che sono inutili per la query
@@ -51,23 +53,25 @@ public class Query1 extends Query {
             return v;
         });
 
-/*
-        reduced.foreach((VoidFunction<Tuple2<Integer, TaxiRow>>) r -> System.out.println(String.format("Month: %d Values: {Total amount: %,.010f | Total tips: %,.010f |" +
-                "Total tolls: %,.010f}", r._1(), r._2().getTotal_amount(), r._2().getTip_amount(), r._2().getTolls_amount())));
-*/
+        Map<Integer, Long> counted = taxiRows.countByKey();
+        counted.forEach((integer, aLong) -> System.out.println("Month: " + integer + " Counted: " + aLong));
 
+
+//        reduced.foreach((VoidFunction<Tuple2<Integer, TaxiRow>>) r -> System.out.println(String.format("Month: %d Values: {Total amount: %,.020f | Total tips: %,.020f |" +
+//                "Total tolls: %,.020f}", r._1(), r._2().getTotal_amount(), r._2().getTip_amount(), r._2().getTolls_amount())));
+//        reduced.foreach((VoidFunction<Tuple2<Integer, TaxiRow>>) r -> System.out.println("Month: " + r._1() + " Values: {Total amount: " + r._2().getTotal_amount() + " | Total tips: " + r._2().getTip_amount() +
+//                " | Total tolls: " + r._2().getTolls_amount() + " }"));
         JavaPairRDD<Integer, Double> results = reduced.mapToPair(
-                r->{
+                r -> {
                     Double tips = r._2().getTip_amount();
                     Double tolls = r._2().getTolls_amount();
                     Double total = r._2().getTotal_amount();
-                    Double mean = tips / (total-tolls);
+                    Double mean = tips / (total - tolls);
                     return new Tuple2<>(r._1(), mean);
                 }
         );
         //TODO Valutare cosa salvare su HDFS considerando che i risultati potrebbero essere riutilizzati per altre query
-        results.foreach((VoidFunction<Tuple2<Integer, Double>>) r-> System.out.println(String.format("Month: %d-%s Mean: %,.010f", r._1(), Month.staticMap.get(r._1()),  r._2())));
-
+        results.foreach((VoidFunction<Tuple2<Integer, Double>>) r -> System.out.println(String.format("Month: %d-%s Mean: %,.010f", r._1(), Month.staticMap.get(r._1()), r._2())));
     }
 
     @Override

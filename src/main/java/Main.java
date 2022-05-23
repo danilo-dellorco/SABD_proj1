@@ -1,9 +1,9 @@
+import com.mongodb.MongoClient;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
-import org.jvnet.hk2.annotations.Optional;
 import queries.*;
 import utils.Config;
 import utils.TaxiRow;
@@ -19,7 +19,9 @@ public class Main {
     //TODO vedere il caching per gli RDD riacceduti
     //TODO scrivere gli output su file HDFS
     public static void main(String[] args) {
-        turnOffLogger();
+        initMongo();
+
+/*        turnOffLogger();
 
 //        Query1 q1 = new Query1(spark, datasetRDD);
         Query2 q2 = new Query2(spark, datasetRDD);
@@ -28,7 +30,11 @@ public class Main {
 //        q1.execute();
         q2.execute();
 //        q3.execute();
-        promptEnterKey();
+        promptEnterKey();*/
+    }
+
+    public static void initMongo() {
+        MongoClient mongoClient = new MongoClient("mongo://localhost:");
     }
 
     public static SparkSession initSpark() {

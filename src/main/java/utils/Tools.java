@@ -5,10 +5,7 @@ import org.apache.spark.api.java.function.VoidFunction;
 import org.apache.spark.sql.Row;
 import scala.Tuple2;
 
-import java.sql.Timestamp;
-import java.util.Comparator;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Scanner;
 
 public class Tools {
@@ -16,6 +13,9 @@ public class Tools {
         taxiRows.foreach((VoidFunction<TaxiRow>) r->System.out.println(r.toString()));
     }
 
+    /**
+     * Mette in attesa il programma fino all'inserimento di input utente
+     */
     public static void promptEnterKey() {
         System.out.println("Running Spark WebUI on http://localhost:4040/jobs/");
         System.out.println("Double press \"ENTER\" to end application...");
@@ -23,6 +23,11 @@ public class Tools {
         scanner.nextLine();
     }
 
+    /**
+     * Genera un oggetto TaxiRow partendo da un Row generico del file parquet
+     * @param r
+     * @return
+     */
     public static TaxiRow ParseRow(Row r) {
         TaxiRow t = new TaxiRow();
         try {
@@ -51,16 +56,11 @@ public class Tools {
         return t;
     }
 
-    public static void iterateUsingIteratorAndEntry(Map<Tuple2<Integer, Long>,Long> map) {
-        Iterator<Map.Entry<Tuple2<Integer, Long>, Long>> iterator = map.entrySet().iterator();
-        while (iterator.hasNext()) {
-            Map.Entry<Tuple2<Integer, Long>, Long> entry = iterator.next();
-            System.out.println(entry.getKey() + ":" + entry.getValue());
-        }
-    }
-
-    // INT, [
-    // (21,[((21,2),83804), ((21,1),363937), ((21,0),13031), ((21,3),2000), ((21,4),2044)])
+    /**
+     * Ritorna la tupla (method,occurrences) relativa al metodo di pagamento più usata nella fascia oraria
+     * @param list
+     * @return
+     */
     public static Tuple2<Long,Integer> getMostFrequentFromIterable(Iterable<Tuple2<Tuple2<Integer, Long>, Integer>> list) {
         Iterator<Tuple2<Tuple2<Integer, Long>, Integer>> iterator = list.iterator();
 
@@ -78,4 +78,9 @@ public class Tools {
         }
         return new Tuple2<>(max._2(),maxVal);
     }
+
+    public static String toCSVLine(){
+        return "";
+    }
+
 }

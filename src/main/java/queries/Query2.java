@@ -14,15 +14,12 @@ import org.apache.spark.api.java.function.VoidFunction;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import scala.Tuple2;
+import utils.Payments;
 import utils.TaxiRow;
 import utils.ValQ2;
-import utils.ValQ3;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-import java.util.function.BiConsumer;
 
 import static utils.Tools.*;
 
@@ -39,14 +36,18 @@ public class Query2 extends Query{
         JavaRDD<TaxiRow> trips = dataset.map(r -> ParseRow(r));
         // TODO .cache()
 
-        // Total tips in every hour slot: (Hour, tips), we assume people pay on arrival
+        // RDD:=[time_slot,statistics]
         JavaPairRDD<Integer, ValQ2> aggregated = trips.mapToPair(r ->
                     new Tuple2<>(r.getTpep_dropoff_datetime().toLocalDateTime().getHour(),
                     new ValQ2(r.getTip_amount(), r.getPayment_type(),1))).sortByKey();
         //TODO .cache() credo
 
-//        aggregated.foreach((VoidFunction<Tuple2<Integer, ValQ2>>) r-> System.out.println(r.toString()));
 
+        /**
+         * Calcolo del metodo di pagamento più diffuso per ogni fascia oraria
+         */
+
+        // RDD:=[(time_slot,payment),1]
         JavaPairRDD<Tuple2<Integer, Long>,Integer> aggr_pay = aggregated.mapToPair(r ->
                 new Tuple2<>(
                         new Tuple2 <>(
@@ -54,22 +55,28 @@ public class Query2 extends Query{
                                 r._2().getPayment_type())
                 ,1));
 
+        // RDD:=[(time_slot,payment),occurrences]
         JavaPairRDD<Tuple2<Integer, Long>,Integer> red_pay = aggr_pay.reduceByKey((Function2<Integer, Integer, Integer>) (v1, v2) -> {
             Integer occ = v1+ v2;
             return occ;
         });
 
-        //TODO prendere il max dall'iterable ed è finito
+        // RDD:=[time_slot,{((time_slot,payment),occurrences)...}]
         JavaPairRDD<Integer, Iterable<Tuple2<Tuple2<Integer, Long>, Integer>>> grouped = red_pay.groupBy((Function<Tuple2<Tuple2<Integer, Long>, Integer>, Integer>) r -> r._1()._1());
 //        grouped.foreach((VoidFunction<Tuple2<Integer, Iterable<Tuple2<Tuple2<Integer, Long>, Integer>>>>) r-> System.out.println(r.toString()));
 
-        JavaPairRDD<Integer,Tuple2<Long,Integer>> rdd_boh = grouped.mapToPair(r ->
+        // RDD:=[time_slot,(top_payment,occurrences)]
+        JavaPairRDD<Integer,Tuple2<Long,Integer>> top_payments = grouped.mapToPair(r ->
                 new Tuple2<>(
                         r._1(),
                         getMostFrequentFromIterable(r._2())
                 ));
-//        rdd_boh.sortByKey().foreach((VoidFunction<Tuple2<Integer, Tuple2<Long, Integer>>>) r-> System.out.println(r.toString()));
 
+        /**
+         * Calcolo della media e deviazione standard di 'tips' per ogni fascia oraria
+         */
+
+        // RDD:=[time_slot,statistics_occurrences]
         JavaPairRDD<Integer, ValQ2> reduced = aggregated.reduceByKey((Function2<ValQ2, ValQ2, ValQ2>) (v1, v2) -> {
             Double tips = v1.getTips() + v2.getTips();
             Integer occ = v1.getOccurrences() + v2.getOccurrences();
@@ -77,6 +84,7 @@ public class Query2 extends Query{
             return v;
         });
 
+        // RDD:=[time_slot,statistics_mean]
         JavaPairRDD<Integer, ValQ2> statistics = reduced.mapToPair(
                 r -> {
                     Integer num_occurrences = r._2().getOccurrences();
@@ -91,6 +99,7 @@ public class Query2 extends Query{
 //        System.out.println("JOINEEEEEEED");
 //        joined.foreach((VoidFunction<Tuple2<Integer, Tuple2<ValQ2, ValQ2>>>) r->System.out.println(r.toString()));
 
+        // RDD:=[time_slot,statistics_deviation_it]
         JavaPairRDD<Integer, ValQ2> iterations = joined.mapToPair(
                 r -> {
                     Double tips_mean = r._2()._2().getTips();
@@ -101,6 +110,7 @@ public class Query2 extends Query{
                     return new Tuple2<>(r._1(), r._2()._2());
                 });
 
+        // RDD:=[time_slot,statistics_deviation_sum]
         JavaPairRDD<Integer, ValQ2> stddev_aggr = iterations.reduceByKey((Function2<ValQ2, ValQ2, ValQ2>) (v1, v2) -> {
             Double tips_total_stddev = v1.getTips_stddev() + v2.getTips_stddev();
             ValQ2 v = new ValQ2(v1.getTips(), v1.getOccurrences(), v1.getPayment_type(), tips_total_stddev);
@@ -108,6 +118,7 @@ public class Query2 extends Query{
         });
 //        stddev_aggr.foreach((VoidFunction<Tuple2<Integer, ValQ2>>) r -> System.out.println(r.toString()));
 
+        // RDD:=[time_slot,statistics_deviation]
         JavaPairRDD<Integer, ValQ2> deviation = stddev_aggr.mapToPair(
                 r -> {
                     Double tips_mean = r._2().getTips();
@@ -117,10 +128,22 @@ public class Query2 extends Query{
                     return new Tuple2<>(r._1(), v);
                 });
 
-//        deviation.sortByKey(false).foreach((VoidFunction<Tuple2<Integer, ValQ2>>) r -> System.out.println(r.toString()));
+        // RDD:=[time_slot,(statistics,(top_payment,occurrences)))]
+        JavaPairRDD<Integer, Tuple2<ValQ2, Tuple2<Long, Integer>>> final_joined = deviation.sortByKey()
+                .join(top_payments)
+                .sortByKey();
 
-        JavaPairRDD<Integer, Tuple2<ValQ2, Tuple2<Long, Integer>>> final_joined = deviation.sortByKey().join(rdd_boh);
-        final_joined.sortByKey().foreach((VoidFunction<Tuple2<Integer, Tuple2<ValQ2, Tuple2<Long, Integer>>>>) r-> System.out.println(r.toString()));
+
+        // CSV LINE := time_slot, tips_mean, tips_dev, top_payment_type, top_payment_name, top_payment_tot
+        JavaRDD<String> result = final_joined.map((Function<Tuple2<Integer, Tuple2<ValQ2, Tuple2<Long, Integer>>>, String>)
+                                r -> {
+            Integer id = Math.toIntExact(r._2()._2()._1());
+            String name =  Payments.staticMap.get(id);
+
+                    return String.format("%d;%f;%f;%d;%s;%d",r._1(),r._2()._1().getTips(),r._2()._1().getTips_stddev(),id,name,r._2()._2()._2());
+                });
+
+        result.saveAsTextFile("output/query2");
     }
 
     @Override

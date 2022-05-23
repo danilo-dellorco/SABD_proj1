@@ -1,0 +1,9 @@
+db.cms.update({ type : "image" }, { $set : {"metadata.author" : "myname" }}, { multi : true })
+
+db.cms.update(
+	{ type : "image" }, 
+	{ $set : 
+		{"metadata.author" : "myname" }
+	},
+	 { multi : true }
+)

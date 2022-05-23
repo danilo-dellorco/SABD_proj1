@@ -5,26 +5,23 @@
 
 package queries;
 
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function2;
-import org.apache.spark.api.java.function.VoidFunction;
-import org.apache.spark.api.java.function.VoidFunction2;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+import org.bson.Document;
 import scala.Tuple2;
-import scala.Tuple3;
 import utils.Month;
 import utils.TaxiRow;
-
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import static utils.Tools.ParseRow;
 //TODO Ci stanno dei dati con mesi diversi da Dicembre-Gennaio-Febbraio
 
+@SuppressWarnings("ALL")
 public class Query1 extends Query {
 
     public Query1(SparkSession spark, JavaRDD<Row> dataset, MongoCollection collection) {
@@ -53,15 +50,7 @@ public class Query1 extends Query {
             return v;
         });
 
-        Map<Integer, Long> counted = taxiRows.countByKey();
-        counted.forEach((integer, aLong) -> System.out.println("Month: " + integer + " Counted: " + aLong));
-
-
-//        reduced.foreach((VoidFunction<Tuple2<Integer, TaxiRow>>) r -> System.out.println(String.format("Month: %d Values: {Total amount: %,.020f | Total tips: %,.020f |" +
-//                "Total tolls: %,.020f}", r._1(), r._2().getTotal_amount(), r._2().getTip_amount(), r._2().getTolls_amount())));
-//        reduced.foreach((VoidFunction<Tuple2<Integer, TaxiRow>>) r -> System.out.println("Month: " + r._1() + " Values: {Total amount: " + r._2().getTotal_amount() + " | Total tips: " + r._2().getTip_amount() +
-//                " | Total tolls: " + r._2().getTolls_amount() + " }"));
-        JavaPairRDD<Integer, Double> results = reduced.mapToPair(
+        List<Tuple2<Integer, Double>> results = reduced.mapToPair(
                 r -> {
                     Double tips = r._2().getTip_amount();
                     Double tolls = r._2().getTolls_amount();
@@ -69,9 +58,25 @@ public class Query1 extends Query {
                     Double mean = tips / (total - tolls);
                     return new Tuple2<>(r._1(), mean);
                 }
-        );
-        //TODO Valutare cosa salvare su HDFS considerando che i risultati potrebbero essere riutilizzati per altre query
-        results.foreach((VoidFunction<Tuple2<Integer, Double>>) r -> System.out.println(String.format("Month: %d-%s Mean: %,.010f", r._1(), Month.staticMap.get(r._1()), r._2())));
+        ).sortByKey().collect();
+
+        for (Tuple2<Integer, Double> r : results) {
+            Integer monthId = r._1();
+            String monthName =  Month.staticMap.get(r._1());
+            Double mean = r._2();
+
+            Document document = new Document();
+            document.append("month_id", monthId);
+            document.append("zone_name", monthName);
+            document.append("mean", mean);
+
+            collection.insertOne(document);
+
+        }
+        FindIterable<Document> docs = collection.find();
+        for (Document doc:docs) {
+            System.out.println(doc);
+        }
     }
 
     @Override

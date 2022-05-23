@@ -1,5 +1,6 @@
 package sparkSQL;
 
+import com.mongodb.client.MongoCollection;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.ForeachFunction;
 import org.apache.spark.api.java.function.Function;
@@ -24,8 +25,8 @@ import static org.apache.spark.sql.functions.callUDF;
 import static org.apache.spark.sql.functions.col;
 
 public class Query1SQL extends Query {
-    public Query1SQL(SparkSession spark, JavaRDD<Row> dataset) {
-        super(spark, dataset);
+    public Query1SQL(SparkSession spark, JavaRDD<Row> dataset, MongoCollection collection) {
+        super(spark, dataset, collection);
     }
 
     public Dataset<Row> createSchemaFromRDD(SparkSession spark, JavaRDD<Row> dataset) {

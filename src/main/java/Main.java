@@ -36,18 +36,16 @@ public class Main {
 
         turnOffLogger();
 
-//        Query1 q1 = new Query1(spark, datasetRDD);
-//        Query2 q2 = new Query2(spark, datasetRDD);
-//        Query3 q3 = new Query3(spark, datasetRDD);
-//          Query1SQL q1SQL = new Query1SQL(spark, datasetRDD);
-          Query2SQL q2SQL = new Query2SQL(spark, datasetRDD);
+        Query1SQL q1SQL = new Query1SQL(spark, datasetRDD,collections.get(0));
+        Query2SQL q2SQL = new Query2SQL(spark, datasetRDD,collections.get(1));
+//        Query2SQL q3SQL = new Query3SQL(spark, datasetRDD,collections.get(2));
 //          q1SQL.execute();
-          q2SQL.execute();
+//          q2SQL.execute();
         Query1 q1 = new Query1(spark, datasetRDD,collections.get(0));
         Query2 q2 = new Query2(spark, datasetRDD,collections.get(1));
         Query3 q3 = new Query3(spark, datasetRDD,collections.get(2));
 
-//        q1.execute();
+        q1.execute();
 //        q2.execute();
 //        q3.execute();
         promptEnterKey();

@@ -31,25 +31,14 @@ public class Tools {
     public static TaxiRow ParseRow(Row r) {
         TaxiRow t = new TaxiRow();
         try {
-            t.setVendorID(r.getLong(0));
-            t.setTpep_pickup_datetime(r.getTimestamp(1));
-            t.setTpep_dropoff_datetime(r.getTimestamp(2));
-            t.setPassenger_count(r.getDouble(3));
-            t.setTrip_distance(r.getDouble(4));
-            t.setRatecodeID(r.getDouble(5));
-            t.setStore_and_fwd_flag(r.getString(6));
-            t.setPULocationID(r.getLong(7));
-            t.setDOLocationID(r.getLong(8));
-            t.setPayment_type(r.getLong(9));
-            t.setFare_amount(r.getDouble(10));
-            t.setExtra(r.getDouble(11));
-            t.setMta_tax(r.getDouble(12));
-            t.setTip_amount(r.getDouble(13));
-            t.setTolls_amount(r.getDouble(14));
-            t.setImprovement_surcharge(r.getDouble(15));
-            t.setTotal_amount(r.getDouble(16));
-            t.setCongestion_surcharge(r.getDouble(17));
-            t.setAirport_fee(r.getDouble(18));
+            t.setTpep_dropoff_datetime(r.getTimestamp(0));
+            t.setPassenger_count(r.getDouble(1));
+            t.setDOLocationID(r.getLong(2));
+            t.setPayment_type(r.getLong(3));
+            t.setFare_amount(r.getDouble(4));
+            t.setTip_amount(r.getDouble(5));
+            t.setTolls_amount(r.getDouble(6));
+            t.setTotal_amount(r.getDouble(7));
         } catch (NullPointerException e) {
             // Ignore rows with null fields
         }

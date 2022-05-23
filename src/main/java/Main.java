@@ -45,8 +45,8 @@ public class Main {
         Query2 q2 = new Query2(spark, datasetRDD,collections.get(1));
         Query3 q3 = new Query3(spark, datasetRDD,collections.get(2));
 
-        q1.execute();
-//        q2.execute();
+//        q1.execute();
+        q2.execute();
 //        q3.execute();
         promptEnterKey();
     }

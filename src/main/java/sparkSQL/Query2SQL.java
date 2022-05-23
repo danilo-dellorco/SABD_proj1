@@ -54,7 +54,8 @@ public class Query2SQL extends Query {
         mostPopularPaymentType.createOrReplaceTempView("mostPaymentType");
 
         Dataset<Row> results = spark.sql("SELECT mostPaymentType.hour_slot, payment_type, counted, tip_avg, tip_stddev " +
-                "FROM mostPaymentType JOIN values ON mostPaymentType.hour_slot = values.hour_slot ORDER BY mostPaymentType.hour_slot ASC");
+                "FROM mostPaymentType JOIN values ON mostPaymentType.hour_slot = values.hour_slot " +
+                "ORDER BY mostPaymentType.hour_slot ASC");
         results.show();
     }
 

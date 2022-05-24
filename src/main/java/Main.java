@@ -1,10 +1,12 @@
 import com.mongodb.Mongo;
 import com.mongodb.MongoClient;
+import com.mongodb.MongoClientURI;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
@@ -25,14 +27,32 @@ import static utils.Tools.ParseRow;
 import static utils.Tools.promptEnterKey;
 
 public class Main {
-    public static final SparkSession spark = initSpark();
-//    public static final JavaRDD<Row> datasetRDD = loadDataset(1000);
-    public static final JavaRDD<Row> datasetRDD = loadDataset();
-    public static final List<MongoCollection> collections = initMongo();
+    public static SparkSession spark = null;
+    public static JavaRDD<Row> datasetRDD = null;
+    public static List<MongoCollection> collections = null;
 
+    public static String jar_path;
+    public static String dataset_path;
+    public static String spark_url;
+
+    public static final String MODE = "DOCKER";
     //TODO vedere il caching per gli RDD riacceduti
     //TODO scrivere gli output su file HDFS
     public static void main(String[] args) {
+
+        if (MODE.equals("LOCAL")) {
+            jar_path = Config.LOCAL_JAR_PATH;
+            dataset_path = Config.LOCAL_DAT1_PATH;
+            spark_url = Config.LOCAL_SPARK_URL;
+        } else {
+            jar_path = Config.JAR_PATH;
+            dataset_path = Config.DAT1_PATH;
+            spark_url = Config.SPARK_URL;
+        }
+
+        spark = initSpark();
+        datasetRDD = loadDataset();
+        collections = initMongo();
 
         turnOffLogger();
 
@@ -52,7 +72,7 @@ public class Main {
     }
 
     public static List<MongoCollection> initMongo() {
-        MongoClient mongo = new MongoClient(Config.MONGO_URL, Config.MONGO_PORT);
+        MongoClient mongo = new MongoClient(new MongoClientURI("mongodb://mongo-server:27017"));
         MongoDatabase db = mongo.getDatabase(Config.MONGO_DB);
         boolean collExists1 = db.listCollectionNames().into(new ArrayList<>()).contains(Config.MONGO_Q1);
         if (collExists1) {
@@ -78,21 +98,14 @@ public class Main {
     }
 
     public static SparkSession initSpark() {
+        SparkConf conf = new SparkConf().setJars(new String[]{jar_path});
         SparkSession spark = SparkSession
                 .builder()
-                .master(Config.SPARK_URL)
+                .config(conf)
+                .master(spark_url)
                 .appName("SABD Proj 1")
                 .getOrCreate();
         return spark;
-    }
-
-    public static JavaRDD<Row> loadDataset(int limit) {
-//        JavaRDD<Row> rows1 = spark.read().option("header", "false").parquet(Config.DAT1_PATH).limit(limit).toJavaRDD();
-        JavaRDD<Row> rows1 = spark.read().option("header", "false").parquet("data/filtered-dec.parquet").limit(limit).toJavaRDD();
-//        JavaRDD<Row> rows2 = spark.read().option("header", "false").parquet(Config.DAT2_PATH).limit(limit).toJavaRDD();
-//        JavaRDD<Row> rows3 = spark.read().option("header", "false").parquet(Config.DAT3_PATH).limit(limit).toJavaRDD();
-//        JavaRDD<Row> merged = rows1.union(rows2).union(rows3);
-        return rows1;
     }
 
     public static JavaRDD<Row> loadDataset() {
@@ -100,7 +113,7 @@ public class Main {
 //        JavaRDD<Row> rows1 = spark.read().option("header", "false").parquet(Config.DAT1_PATH).toJavaRDD();
 //        JavaRDD<Row> rows2 = spark.read().option("header", "false").parquet(Config.DAT2_PATH).toJavaRDD();
 //        JavaRDD<Row> rows3 = spark.read().option("header", "false").parquet(Config.DAT3_PATH).toJavaRDD();
-        JavaRDD<Row> rows3 = spark.read().option("header", "false").parquet("data/filtered-dec.parquet").toJavaRDD();
+        JavaRDD<Row> rows3 = spark.read().option("header", "false").parquet(dataset_path).toJavaRDD();
 //        JavaRDD<Row> merged = rows1.union(rows2).union(rows3);
 //        return merged;
         return rows3;

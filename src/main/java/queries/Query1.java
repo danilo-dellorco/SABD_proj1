@@ -33,6 +33,8 @@ public class Query1 extends Query {
     @Override
     public void execute() {
 
+        // RDD:=[month,values]
+        //TODO un ValQ1 invece di tutto Taxi Row
         JavaPairRDD<Integer, TaxiRow> taxiRows = dataset.mapToPair(
                 r -> {
                     TaxiRow tr = ParseRow(r);
@@ -40,8 +42,7 @@ public class Query1 extends Query {
                     return new Tuple2<>(ts, tr);
                 });
 
-//        taxiRows.foreach((VoidFunction<Tuple2<Integer, TaxiRow>>) r -> System.out.println(r));
-
+        // RDD:=[month,values_aggr]
         // TODO valutare creazione classe ValQ1, perchè usando TaxiRow dovremmo settare anche tutti gli altri campi che sono inutili per la query
         JavaPairRDD<Integer, TaxiRow> reduced = taxiRows.reduceByKey((Function2<TaxiRow, TaxiRow, TaxiRow>) (v1, v2) -> {
             Double tips = v1.getTip_amount() + v2.getTip_amount();
@@ -55,6 +56,7 @@ public class Query1 extends Query {
             return v;
         });
 
+        // result_list:=[month,mean_value]
         List<Tuple2<Integer, Double>> results = reduced.mapToPair(
                 r -> {
                     Double tips = r._2().getTip_amount();
@@ -65,6 +67,9 @@ public class Query1 extends Query {
                 }
         ).sortByKey().collect();
 
+        /**
+         * Salvataggio dei risultati su mongodb
+         */
         for (Tuple2<Integer, Double> r : results) {
             Integer monthId = r._1();
             String monthName = Month.staticMap.get(r._1());
@@ -72,20 +77,22 @@ public class Query1 extends Query {
 
             Document document = new Document();
             document.append("month_id", monthId);
-            document.append("zone_name", monthName);
+            document.append("month_name", monthName);
             document.append("mean", mean);
 
             collection.insertOne(document);
 
         }
+
+        /**
+         * Stampa a schermo dei risultati
+         */
+        System.out.println("\n—————————————————————————————————————————————————————————— QUERY 1 ——————————————————————————————————————————————————————————");
         FindIterable<Document> docs = collection.find();
         for (Document doc : docs) {
             System.out.println(doc);
         }
-    }
-
-    @Override
-    public void print() {
+        System.out.println("—————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————\n");
 
     }
 }

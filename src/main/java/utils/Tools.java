@@ -5,8 +5,11 @@ import org.apache.spark.api.java.function.VoidFunction;
 import org.apache.spark.sql.Row;
 import scala.Tuple2;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Iterator;
 import java.util.Scanner;
+import java.util.TimeZone;
 
 public class Tools {
     public static void printRDD(JavaRDD<TaxiRow> taxiRows){
@@ -31,7 +34,16 @@ public class Tools {
     public static TaxiRow ParseRow(Row r) {
         TaxiRow t = new TaxiRow();
         try {
-            t.setTpep_dropoff_datetime(r.getTimestamp(0));
+            java.util.Calendar cal = Calendar.getInstance();
+            cal.setTimeZone(TimeZone.getTimeZone("UTC"));
+            java.sql.Timestamp t1 = r.getTimestamp(0);
+            cal.setTime(t1);
+            SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss");
+            sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+
+            String ts = sdf.format(cal.getTime());
+
+            t.setTpep_dropoff_datetime(ts);
             t.setPassenger_count(r.getDouble(1));
             t.setDOLocationID(r.getLong(2));
             t.setPayment_type(r.getLong(3));
@@ -68,8 +80,12 @@ public class Tools {
         return new Tuple2<>(max._2(),maxVal);
     }
 
-    public static String toCSVLine(){
-        return "";
+    public static Integer getMonth(String timestamp) {
+        return Integer.parseInt(timestamp.substring(5,7));
+    }
+
+    public static Integer getHour(String timestamp) {
+        return Integer.parseInt(timestamp.substring(11,13));
     }
 
 }

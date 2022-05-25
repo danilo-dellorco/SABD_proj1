@@ -8,8 +8,8 @@ import java.time.format.DateTimeFormatter;
 
 public class TaxiRow implements Serializable {
     long VendorID;
-    Timestamp tpep_pickup_datetime;
-    Timestamp tpep_dropoff_datetime;
+    String tpep_pickup_datetime;
+    String tpep_dropoff_datetime;
     Double passenger_count;
     Double trip_distance;
     Double RatecodeID;
@@ -59,11 +59,11 @@ public class TaxiRow implements Serializable {
         return VendorID;
     }
 
-    public Timestamp getTpep_pickup_datetime() {
+    public String getTpep_pickup_datetime() {
         return tpep_pickup_datetime;
     }
 
-    public Timestamp getTpep_dropoff_datetime() {
+    public String getTpep_dropoff_datetime() {
         return tpep_dropoff_datetime;
     }
 
@@ -144,11 +144,11 @@ public class TaxiRow implements Serializable {
         VendorID = vendorID;
     }
 
-    public void setTpep_pickup_datetime(Timestamp tpep_pickup_datetime) {
+    public void setTpep_pickup_datetime(String tpep_pickup_datetime) {
         this.tpep_pickup_datetime = tpep_pickup_datetime;
     }
 
-    public void setTpep_dropoff_datetime(Timestamp tpep_dropoff_datetime) {
+    public void setTpep_dropoff_datetime(String tpep_dropoff_datetime) {
         this.tpep_dropoff_datetime = tpep_dropoff_datetime;
     }
 

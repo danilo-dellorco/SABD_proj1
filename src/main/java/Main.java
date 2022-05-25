@@ -35,7 +35,7 @@ public class Main {
     public static String dataset_path;
     public static String spark_url;
 
-    public static final String MODE = "DOCKER";
+    public static final String MODE = "LOCAL";
     //TODO vedere il caching per gli RDD riacceduti
     //TODO scrivere gli output su file HDFS
     public static void main(String[] args) {
@@ -113,7 +113,7 @@ public class Main {
 //        JavaRDD<Row> rows1 = spark.read().option("header", "false").parquet(Config.DAT1_PATH).toJavaRDD();
 //        JavaRDD<Row> rows2 = spark.read().option("header", "false").parquet(Config.DAT2_PATH).toJavaRDD();
 //        JavaRDD<Row> rows3 = spark.read().option("header", "false").parquet(Config.DAT3_PATH).toJavaRDD();
-        JavaRDD<Row> rows3 = spark.read().option("header", "false").parquet(dataset_path).toJavaRDD();
+        JavaRDD<Row> rows3 = spark.read().option("header", "false").parquet(dataset_path).limit(100).toJavaRDD();
 //        JavaRDD<Row> merged = rows1.union(rows2).union(rows3);
 //        return merged;
         return rows3;

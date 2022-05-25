@@ -19,6 +19,7 @@ import org.bson.Document;
 import scala.Tuple2;
 import utils.Payments;
 import utils.TaxiRow;
+import utils.Tools;
 import utils.ValQ2;
 
 import java.util.ArrayList;
@@ -39,8 +40,9 @@ public class Query2 extends Query{
         // TODO .cache()
 
         // RDD:=[time_slot,statistics]
+        // 2021-12-10 08:05:04.0
         JavaPairRDD<Integer, ValQ2> aggregated = trips.mapToPair(r ->
-                    new Tuple2<>(r.getTpep_dropoff_datetime().toLocalDateTime().getHour(),
+                    new Tuple2<>(Tools.getHour(r.getTpep_dropoff_datetime()),
                     new ValQ2(r.getTip_amount(), r.getPayment_type(),1))).sortByKey();
         //TODO .cache() credo
 
@@ -62,6 +64,7 @@ public class Query2 extends Query{
             Integer occ = v1+ v2;
             return occ;
         });
+        red_pay.foreach((VoidFunction<Tuple2<Tuple2<Integer, Long>, Integer>>) r -> System.out.println(r.toString()));
 
         // RDD:=[time_slot,{((time_slot,payment),occurrences)...}]
         JavaPairRDD<Integer, Iterable<Tuple2<Tuple2<Integer, Long>, Integer>>> grouped = red_pay.groupBy((Function<Tuple2<Tuple2<Integer, Long>, Integer>, Integer>) r -> r._1()._1());

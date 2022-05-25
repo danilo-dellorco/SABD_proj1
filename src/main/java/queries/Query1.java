@@ -16,6 +16,8 @@ import org.bson.Document;
 import scala.Tuple2;
 import utils.Month;
 import utils.TaxiRow;
+import utils.Tools;
+
 import java.util.List;
 
 import static utils.Tools.ParseRow;
@@ -32,8 +34,11 @@ public class Query1 extends Query {
     public void execute() {
 
         JavaPairRDD<Integer, TaxiRow> taxiRows = dataset.mapToPair(
-                r -> new Tuple2<>(r.getTimestamp(0).getMonth(),
-                        ParseRow(r)));
+                r -> {
+                    TaxiRow tr = ParseRow(r);
+                    Integer ts = Tools.getMonth(tr.getTpep_dropoff_datetime());
+                    return new Tuple2<>(ts, tr);
+                });
 
 //        taxiRows.foreach((VoidFunction<Tuple2<Integer, TaxiRow>>) r -> System.out.println(r));
 
@@ -62,7 +67,7 @@ public class Query1 extends Query {
 
         for (Tuple2<Integer, Double> r : results) {
             Integer monthId = r._1();
-            String monthName =  Month.staticMap.get(r._1());
+            String monthName = Month.staticMap.get(r._1());
             Double mean = r._2();
 
             Document document = new Document();
@@ -74,7 +79,7 @@ public class Query1 extends Query {
 
         }
         FindIterable<Document> docs = collection.find();
-        for (Document doc:docs) {
+        for (Document doc : docs) {
             System.out.println(doc);
         }
     }

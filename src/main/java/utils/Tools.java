@@ -34,7 +34,7 @@ public class Tools {
     public static TaxiRow ParseRow(Row r) {
         TaxiRow t = new TaxiRow();
         try {
-            java.util.Calendar cal = Calendar.getInstance();
+            Calendar cal = Calendar.getInstance();
             cal.setTimeZone(TimeZone.getTimeZone("UTC"));
             java.sql.Timestamp t1 = r.getTimestamp(0);
             cal.setTime(t1);

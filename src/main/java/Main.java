@@ -1,7 +1,5 @@
-import com.mongodb.Mongo;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
-import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import org.apache.log4j.Level;
@@ -10,20 +8,14 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
-import org.bson.Document;
-import org.bson.conversions.Bson;
-import queries.*;
+import queries.Query1;
 import sparkSQL.Query1SQL;
-import sparkSQL.Query2SQL;
 import utils.Config;
-import utils.TaxiRow;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.Consumer;
 
-import static utils.Tools.ParseRow;
 import static utils.Tools.promptEnterKey;
 
 public class Main {
@@ -57,16 +49,17 @@ public class Main {
         turnOffLogger();
 
         Query1SQL q1SQL = new Query1SQL(spark, datasetRDD,collections.get(0));
-        Query2SQL q2SQL = new Query2SQL(spark, datasetRDD,collections.get(1));
+//        Query2SQL q2SQL = new Query2SQL(spark, datasetRDD,collections.get(1));
 //        Query2SQL q3SQL = new Query3SQL(spark, datasetRDD,collections.get(2));
 //          q1SQL.execute();
 //          q2SQL.execute();
         Query1 q1 = new Query1(spark, datasetRDD,collections.get(0));
-        Query2 q2 = new Query2(spark, datasetRDD,collections.get(1));
-        Query3 q3 = new Query3(spark, datasetRDD,collections.get(2));
+//        Query2 q2 = new Query2(spark, datasetRDD,collections.get(1));
+//        Query3 q3 = new Query3(spark, datasetRDD,collections.get(2));
 
-//        q1.execute();
-        q2.execute();
+        q1.execute();
+//        q2.execute();
+        q1SQL.execute();
 //        q3.execute();
         promptEnterKey();
     }
@@ -113,7 +106,7 @@ public class Main {
 //        JavaRDD<Row> rows1 = spark.read().option("header", "false").parquet(Config.DAT1_PATH).toJavaRDD();
 //        JavaRDD<Row> rows2 = spark.read().option("header", "false").parquet(Config.DAT2_PATH).toJavaRDD();
 //        JavaRDD<Row> rows3 = spark.read().option("header", "false").parquet(Config.DAT3_PATH).toJavaRDD();
-        JavaRDD<Row> rows3 = spark.read().option("header", "false").parquet(dataset_path).limit(100).toJavaRDD();
+        JavaRDD<Row> rows3 = spark.read().option("header", "false").parquet(dataset_path).toJavaRDD();
 //        JavaRDD<Row> merged = rows1.union(rows2).union(rows3);
 //        return merged;
         return rows3;

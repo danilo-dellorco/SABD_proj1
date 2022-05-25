@@ -39,7 +39,7 @@ public class Query1 extends Query {
                 r -> {
                     TaxiRow tr = ParseRow(r);
                     Integer ts = Tools.getMonth(tr.getTpep_dropoff_datetime());
-                    return new Tuple2<>(ts,tr);
+                    return new Tuple2<>(ts, tr);
                 });
 
         // RDD:=[month,values_aggr]
@@ -72,7 +72,7 @@ public class Query1 extends Query {
          */
         for (Tuple2<Integer, Double> r : results) {
             Integer monthId = r._1();
-            String monthName =  Month.staticMap.get(r._1());
+            String monthName = Month.staticMap.get(r._1());
             Double mean = r._2();
 
             Document document = new Document();
@@ -89,7 +89,7 @@ public class Query1 extends Query {
          */
         System.out.println("\n—————————————————————————————————————————————————————————— QUERY 1 ——————————————————————————————————————————————————————————");
         FindIterable<Document> docs = collection.find();
-        for (Document doc:docs) {
+        for (Document doc : docs) {
             System.out.println(doc);
         }
         System.out.println("—————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————\n");

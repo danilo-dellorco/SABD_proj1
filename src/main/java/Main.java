@@ -10,7 +10,6 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import queries.*;
 import sparkSQL.Query1SQL;
-import sparkSQL.Query2SQL;
 import utils.Config;
 import java.util.ArrayList;
 import java.util.Arrays;

@@ -44,13 +44,13 @@ public class Tools {
             String ts = sdf.format(cal.getTime());
 
             t.setTpep_dropoff_datetime(ts);
-            t.setPassenger_count(r.getDouble(1));
-            t.setDOLocationID(r.getLong(2));
-            t.setPayment_type(r.getLong(3));
-            t.setFare_amount(r.getDouble(4));
-            t.setTip_amount(r.getDouble(5));
-            t.setTolls_amount(r.getDouble(6));
-            t.setTotal_amount(r.getDouble(7));
+            t.setDOLocationID(r.getLong(1));
+            t.setPayment_type(r.getLong(2));
+            t.setFare_amount(r.getDouble(3));
+            t.setTip_amount(r.getDouble(4));
+            t.setTolls_amount(r.getDouble(5));
+            t.setTotal_amount(r.getDouble(6));
+            t.setPassenger_count(r.getDouble(7));
         } catch (NullPointerException e) {
             // Ignore rows with null fields
         }

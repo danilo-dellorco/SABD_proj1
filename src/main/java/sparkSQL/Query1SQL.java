@@ -64,9 +64,4 @@ public class Query1SQL extends Query {
 //        METODO ALTERNATIVO utilizzando metodi sql integrati di spark
 //        values.withColumn("mean", values.col("tips").divide((values.col("total").minus(values.col("tolls"))))).show();
     }
-
-    @Override
-    public void print() {
-
-    }
 }

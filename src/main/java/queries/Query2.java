@@ -28,9 +28,6 @@ import java.util.List;
 import static utils.Tools.*;
 
 public class Query2 extends Query{
-    private static List query2_mean = new ArrayList();
-    private static List<Tuple2<Integer,Long>> query2_methods = new ArrayList();
-
     public Query2(SparkSession spark, JavaRDD<Row> dataset, MongoCollection collection) {
         super(spark, dataset, collection);
     }
@@ -40,7 +37,6 @@ public class Query2 extends Query{
         // TODO .cache()
 
         // RDD:=[time_slot,statistics]
-        // 2021-12-10 08:05:04.0
         JavaPairRDD<Integer, ValQ2> aggregated = trips.mapToPair(r ->
                     new Tuple2<>(Tools.getHour(r.getTpep_dropoff_datetime()),
                     new ValQ2(r.getTip_amount(), r.getPayment_type(),1))).sortByKey();
@@ -64,11 +60,9 @@ public class Query2 extends Query{
             Integer occ = v1+ v2;
             return occ;
         });
-        red_pay.foreach((VoidFunction<Tuple2<Tuple2<Integer, Long>, Integer>>) r -> System.out.println(r.toString()));
 
         // RDD:=[time_slot,{((time_slot,payment),occurrences)...}]
         JavaPairRDD<Integer, Iterable<Tuple2<Tuple2<Integer, Long>, Integer>>> grouped = red_pay.groupBy((Function<Tuple2<Tuple2<Integer, Long>, Integer>, Integer>) r -> r._1()._1());
-//        grouped.foreach((VoidFunction<Tuple2<Integer, Iterable<Tuple2<Tuple2<Integer, Long>, Integer>>>>) r-> System.out.println(r.toString()));
 
         // RDD:=[time_slot,(top_payment,occurrences)]
         JavaPairRDD<Integer,Tuple2<Long,Integer>> top_payments = grouped.mapToPair(r ->
@@ -133,6 +127,9 @@ public class Query2 extends Query{
                     return new Tuple2<>(r._1(), v);
                 });
 
+        /**
+         * Unione dei metodi di pagamento con le statistiche calcolate
+         */
         // RDD:=[time_slot,(statistics,(top_payment,occurrences)))]
         JavaPairRDD<Integer, Tuple2<ValQ2, Tuple2<Long, Integer>>> final_joined = deviation.sortByKey()
                 .join(top_payments)
@@ -140,6 +137,9 @@ public class Query2 extends Query{
 
         List<Tuple2<Integer, Tuple2<ValQ2, Tuple2<Long, Integer>>>> result = final_joined.collect();
 
+        /**
+         * Salvataggio dei risultati su mongodb
+         */
         for (Tuple2<Integer, Tuple2<ValQ2, Tuple2<Long, Integer>>> r:result) {
             Integer slot = r._1();
             Double mean = r._2()._1().getTips();
@@ -159,26 +159,15 @@ public class Query2 extends Query{
             collection.insertOne(document);
 
         }
+
+        /**
+         * Stampa a schermo dei risultati
+         */
+        System.out.println("\n—————————————————————————————————————————————————————————— QUERY 2 ——————————————————————————————————————————————————————————");
         FindIterable<Document> docs = collection.find();
         for (Document doc:docs) {
             System.out.println(doc);
-
         }
-
-/*        // CSV LINE := time_slot, tips_mean, tips_dev, top_payment_type, top_payment_name, top_payment_tot
-        JavaRDD<String> result = final_joined.map((Function<Tuple2<Integer, Tuple2<ValQ2, Tuple2<Long, Integer>>>, String>)
-                                r -> {
-            Integer id = Math.toIntExact(r._2()._2()._1());
-            String name =  Payments.staticMap.get(id);
-
-                    return String.format("%d;%f;%f;%d;%s;%d",r._1(),r._2()._1().getTips(),r._2()._1().getTips_stddev(),id,name,r._2()._2()._2());
-                });
-
-        result.saveAsTextFile("output/query2");*/
-    }
-
-    @Override
-    public void print() {
-
+        System.out.println("—————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————\n");
     }
 }

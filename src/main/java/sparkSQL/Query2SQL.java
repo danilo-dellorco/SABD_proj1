@@ -58,9 +58,4 @@ public class Query2SQL extends Query {
                 "ORDER BY mostPaymentType.hour_slot ASC");
         results.show();
     }
-
-    @Override
-    public void print() {
-
-    }
 }

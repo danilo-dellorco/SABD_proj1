@@ -17,6 +17,4 @@ public abstract class Query {
     }
 
     public abstract void execute();
-    public abstract void print();
-
 }

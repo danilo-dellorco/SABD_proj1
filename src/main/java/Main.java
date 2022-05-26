@@ -9,7 +9,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import queries.*;
-import sparkSQL.Query1SQL;
+import sparkSQL.*;
 import utils.Config;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,7 +30,7 @@ public class Main {
     // EXEC_MODE = {LOCAL,DOCKER}
     public static final String EXEC_MODE = "LOCAL";
     // DATA_MODE = {LIMITED,UNLIMITED}
-    private static final String DATA_MODE = "UNLIMITED";
+    private static final String DATA_MODE = "LIMITED";
     private static final int LIMIT_NUM = 1000;
 
     //TODO vedere il caching per gli RDD riacceduti
@@ -41,20 +41,20 @@ public class Main {
         initMongo();
         turnOffLogger();
 
-        Query1SQL q1SQL = new Query1SQL(spark, yellowRDD,collections.get(0));
-        Query2SQL q2SQL = new Query2SQL(spark, yellowRDD,collections.get(1));
+        Query1SQL q1SQL = new Query1SQL(spark, yellowRDD,collections.get(3));
+        Query2SQL q2SQL = new Query2SQL(spark, yellowRDD,collections.get(4));
         Query1 q1 = new Query1(spark, yellowRDD,collections.get(0));
         Query2 q2 = new Query2(spark, yellowRDD,collections.get(1));
         Query3 q3 = new Query3(spark, yellowRDD,collections.get(2));
 //        Query3 q4 = new Query4(spark, datasetRDD,collections.get(3));
 
-        q1.execute();
+//        q1.execute();
         q2.execute();
-        q3.execute();
+//        q3.execute();
 //        q4.execute();
 
 //        q1SQL.execute();
-//        q2SQL.execute();
+        q2SQL.execute();
         promptEnterKey();
     }
 
@@ -77,15 +77,28 @@ public class Main {
         if (collExists3) {
             db.getCollection(Config.MONGO_Q3).drop();
         }
+        boolean collExists4 = db.listCollectionNames().into(new ArrayList<>()).contains(Config.MONGO_Q1SQL);
+        if (collExists4) {
+            db.getCollection(Config.MONGO_Q1SQL).drop();
+        }
+        boolean collExists5 = db.listCollectionNames().into(new ArrayList<>()).contains(Config.MONGO_Q2SQL);
+        if (collExists5) {
+            db.getCollection(Config.MONGO_Q2SQL).drop();
+        }
+
         db.createCollection(Config.MONGO_Q1);
+        db.createCollection(Config.MONGO_Q1SQL);
         db.createCollection(Config.MONGO_Q2);
+        db.createCollection(Config.MONGO_Q2SQL);
         db.createCollection(Config.MONGO_Q3);
 
         MongoCollection collection1 = db.getCollection(Config.MONGO_Q1);
         MongoCollection collection2 = db.getCollection(Config.MONGO_Q2);
         MongoCollection collection3 = db.getCollection(Config.MONGO_Q3);
+        MongoCollection collection1_SQL = db.getCollection(Config.MONGO_Q1SQL);
+        MongoCollection collection2_SQL = db.getCollection(Config.MONGO_Q2SQL);
 
-        collections = Arrays.asList(collection1,collection2,collection3);
+        collections = Arrays.asList(collection1,collection2,collection3, collection1_SQL, collection2_SQL);
     }
 
     /**

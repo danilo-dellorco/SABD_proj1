@@ -1,5 +1,6 @@
 package sparkSQL;
 
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
@@ -10,6 +11,7 @@ import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
+import org.bson.Document;
 import queries.Query;
 
 import java.sql.Timestamp;
@@ -43,7 +45,7 @@ public class Query1SQL extends Query {
                     Timestamp ts = v1.getTimestamp(0);
                     cal.setTime(ts);
                     Timestamp ts_zone = Timestamp.valueOf(sdf.format(cal.getTime()));
-                    return RowFactory.create(ts_zone, v1.getDouble(5), v1.getDouble(6), v1.getDouble(7));
+                    return RowFactory.create(ts_zone, v1.getDouble(4), v1.getDouble(5), v1.getDouble(6));
                 });
 
         return spark.createDataFrame(rowRDD, schema);
@@ -58,12 +60,31 @@ public class Query1SQL extends Query {
                 "count(*) AS occurrences " +
                 "FROM taxi_row GROUP BY month(tpep_dropoff_datatime)");
         values.createOrReplaceTempView("taxi_values");
-//        values.show();
         Dataset<Row> results = spark.sql("SELECT month AS month_id, " +                                         // month-1 per riportare alla notazione originale 0-11
                 "date_format(to_timestamp(string(month), 'M'), 'MMMM') AS month_name," +
-                " (tips/(total-tolls)) AS mean FROM taxi_values");
+                " (tips/(total-tolls)) AS mean FROM taxi_values ORDER BY month ASC");
 
+
+        /**
+         * Salvataggio dei risultati su mongodb
+         */
+        List<Row> resultsList = results.collectAsList();
+        for (Row r : resultsList){
+            Document doc = new Document();
+            doc.append("month_id", r.getInt(0));
+            doc.append("month_name", r.getString(1));
+            doc.append("mean", r.getDouble(2));
+
+            collection.insertOne(doc);
+        }
+
+        /**
+         * Stampa a schermo dei risultati
+         */
+        System.out.println("\n—————————————————————————————————————————————————————————— QUERY 1 SQL ——————————————————————————————————————————————————————");
         results.show();
+        System.out.println("—————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————\n");
+
 
 
 

@@ -9,7 +9,7 @@ public class Config {
 
 
 //    public static final String YELLOW_DATASET = "/filtered.parquet";
-    public static final String YELLOW_DATASET = "/test.parquet";
+    public static final String YELLOW_DATASET = "/filtered.parquet";
     public static final String GREEN_DATASET = "/green.parquet";
 
     public static final String YELLOW_DATASET_PATH = HDFS_URL + YELLOW_DATASET;
@@ -31,4 +31,6 @@ public class Config {
     public static final String MONGO_Q1   = "Q1_results";
     public static final String MONGO_Q2   = "Q2_results";
     public static final String MONGO_Q3   = "Q3_results";
+    public static final String MONGO_Q1SQL = "Q1SQL_results";
+    public static final String MONGO_Q2SQL = "Q2SQL_results";
 }

@@ -15,7 +15,7 @@ import org.apache.spark.sql.SparkSession;
 import org.bson.Document;
 import scala.Tuple2;
 import utils.Month;
-import utils.TaxiRow;
+import utils.YellowTaxiRow;
 import utils.Tools;
 
 import java.util.List;
@@ -35,21 +35,21 @@ public class Query1 extends Query {
 
         // RDD:=[month,values]
         //TODO un ValQ1 invece di tutto Taxi Row
-        JavaPairRDD<Integer, TaxiRow> taxiRows = dataset.mapToPair(
+        JavaPairRDD<Integer, YellowTaxiRow> taxiRows = dataset.mapToPair(
                 r -> {
-                    TaxiRow tr = ParseRow(r);
+                    YellowTaxiRow tr = ParseRow(r);
                     Integer ts = Tools.getMonth(tr.getTpep_dropoff_datetime());
                     return new Tuple2<>(ts, tr);
                 });
 
         // RDD:=[month,values_aggr]
         // TODO valutare creazione classe ValQ1, perchè usando TaxiRow dovremmo settare anche tutti gli altri campi che sono inutili per la query
-        JavaPairRDD<Integer, TaxiRow> reduced = taxiRows.reduceByKey((Function2<TaxiRow, TaxiRow, TaxiRow>) (v1, v2) -> {
+        JavaPairRDD<Integer, YellowTaxiRow> reduced = taxiRows.reduceByKey((Function2<YellowTaxiRow, YellowTaxiRow, YellowTaxiRow>) (v1, v2) -> {
             Double tips = v1.getTip_amount() + v2.getTip_amount();
             Double total = v1.getTotal_amount() + v2.getTotal_amount();
             Double tolls = v1.getTolls_amount() + v2.getTolls_amount();
 
-            TaxiRow v = new TaxiRow();
+            YellowTaxiRow v = new YellowTaxiRow();
             v.setTip_amount(tips);
             v.setTotal_amount(total);
             v.setTolls_amount(tolls);

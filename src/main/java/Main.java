@@ -11,6 +11,9 @@ import org.apache.spark.sql.SparkSession;
 import queries.*;
 import sparkSQL.*;
 import utils.Config;
+import utils.Tools;
+
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -30,7 +33,7 @@ public class Main {
     // EXEC_MODE = {LOCAL,DOCKER}
     public static final String EXEC_MODE = "LOCAL";
     // DATA_MODE = {LIMITED,UNLIMITED}
-    private static final String DATA_MODE = "LIMITED";
+    private static final String DATA_MODE = "UNLIMITED";
     private static final int LIMIT_NUM = 1000;
 
     //TODO vedere il caching per gli RDD riacceduti
@@ -41,21 +44,47 @@ public class Main {
         initMongo();
         turnOffLogger();
 
-        Query1SQL q1SQL = new Query1SQL(spark, yellowRDD,collections.get(3));
-        Query2SQL q2SQL = new Query2SQL(spark, yellowRDD,collections.get(4));
-        Query1 q1 = new Query1(spark, yellowRDD,collections.get(0));
-        Query2 q2 = new Query2(spark, yellowRDD,collections.get(1));
-        Query3 q3 = new Query3(spark, yellowRDD,collections.get(2));
 //        Query3 q4 = new Query4(spark, datasetRDD,collections.get(3));
 
-//        q1.execute();
-        q2.execute();
-//        q3.execute();
-//        q4.execute();
+        Timestamp start=null, end = null;
+        System.out.println("----------- "+args[0]);
+        switch (args[0]){
+            case "Q1":
+                System.out.println("executing Q1");
+                Query1 q1 = new Query1(spark, yellowRDD,collections.get(0));
+                start = Tools.getTimestamp();
+                q1.execute();
+                end = Tools.getTimestamp();
+                System.out.println("finished Q1");
+                break;
+            case "Q2":
+                Query2 q2 = new Query2(spark, yellowRDD,collections.get(1));
+                start = Tools.getTimestamp();
+                q2.execute();
+                end = Tools.getTimestamp();
+                break;
+            case "Q3":
+                Query3 q3 = new Query3(spark, yellowRDD,collections.get(2));
+                start = Tools.getTimestamp();
+                q3.execute();
+                end = Tools.getTimestamp();
+                break;
+            case "Q1SQL":
+                Query1SQL q1SQL = new Query1SQL(spark, yellowRDD,collections.get(3));
+                start = Tools.getTimestamp();
+                q1SQL.execute();
+                end = Tools.getTimestamp();
+                break;
+            case "Q2SQL":
+                Query2SQL q2SQL = new Query2SQL(spark, yellowRDD,collections.get(4));
+                start = Tools.getTimestamp();
+                q2SQL.execute();
+                end = Tools.getTimestamp();
+                break;
+        }
 
-//        q1SQL.execute();
-        q2SQL.execute();
-        promptEnterKey();
+        System.out.println(args[0]+" execution time: "+Tools.toMinutes(end.getTime()-start.getTime()));
+//        promptEnterKey();
     }
 
     /**
@@ -65,24 +94,19 @@ public class Main {
     public static void initMongo() {
         MongoClient mongo = new MongoClient(new MongoClientURI(Config.MONGO_URL)); //add mongo-server to /etc/hosts
         MongoDatabase db = mongo.getDatabase(Config.MONGO_DB);
-        boolean collExists1 = db.listCollectionNames().into(new ArrayList<>()).contains(Config.MONGO_Q1);
-        if (collExists1) {
+        if (db.listCollectionNames().into(new ArrayList<>()).contains(Config.MONGO_Q1)) {
             db.getCollection(Config.MONGO_Q1).drop();
         }
-        boolean collExists2 = db.listCollectionNames().into(new ArrayList<>()).contains(Config.MONGO_Q2);
-        if (collExists2) {
+        if (db.listCollectionNames().into(new ArrayList<>()).contains(Config.MONGO_Q2)) {
             db.getCollection(Config.MONGO_Q2).drop();
         }
-        boolean collExists3 = db.listCollectionNames().into(new ArrayList<>()).contains(Config.MONGO_Q3);
-        if (collExists3) {
+        if (db.listCollectionNames().into(new ArrayList<>()).contains(Config.MONGO_Q3)) {
             db.getCollection(Config.MONGO_Q3).drop();
         }
-        boolean collExists4 = db.listCollectionNames().into(new ArrayList<>()).contains(Config.MONGO_Q1SQL);
-        if (collExists4) {
+        if (db.listCollectionNames().into(new ArrayList<>()).contains(Config.MONGO_Q1SQL)) {
             db.getCollection(Config.MONGO_Q1SQL).drop();
         }
-        boolean collExists5 = db.listCollectionNames().into(new ArrayList<>()).contains(Config.MONGO_Q2SQL);
-        if (collExists5) {
+        if (db.listCollectionNames().into(new ArrayList<>()).contains(Config.MONGO_Q2SQL)) {
             db.getCollection(Config.MONGO_Q2SQL).drop();
         }
 
@@ -107,13 +131,12 @@ public class Main {
      */
     public static void initSpark() {
         SparkConf conf = new SparkConf().setJars(new String[]{jar_path});
-        SparkSession sparkSession = SparkSession
+        spark = SparkSession
                 .builder()
                 .config(conf)
                 .master(spark_url)
                 .appName("SABD Proj 1")
                 .getOrCreate();
-        spark=sparkSession;
     }
 
     /**
@@ -123,12 +146,11 @@ public class Main {
     public static void loadDataset() {
         JavaRDD<Row> rows;
         if (DATA_MODE.equals("UNLIMITED")) {
-            rows = spark.read().option("header", "false").parquet(yellow_dataset_path).toJavaRDD();
+            yellowRDD = spark.read().option("header", "false").parquet(yellow_dataset_path).toJavaRDD();
         }
         else {
-            rows = spark.read().option("header", "false").parquet(yellow_dataset_path).limit(LIMIT_NUM).toJavaRDD();
+            yellowRDD = spark.read().option("header", "false").parquet(yellow_dataset_path).limit(LIMIT_NUM).toJavaRDD();
         }
-        yellowRDD = rows;
         greenRDD = spark.read().option("header", "false").parquet(green_dataset_path).toJavaRDD();
     }
 

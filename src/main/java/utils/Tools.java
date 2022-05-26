@@ -5,15 +5,13 @@ import org.apache.spark.api.java.function.VoidFunction;
 import org.apache.spark.sql.Row;
 import scala.Tuple2;
 
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Iterator;
-import java.util.Scanner;
-import java.util.TimeZone;
+import java.util.*;
 
 public class Tools {
-    public static void printRDD(JavaRDD<TaxiRow> taxiRows){
-        taxiRows.foreach((VoidFunction<TaxiRow>) r->System.out.println(r.toString()));
+    public static void printRDD(JavaRDD<YellowTaxiRow> taxiRows){
+        taxiRows.foreach((VoidFunction<YellowTaxiRow>) r->System.out.println(r.toString()));
     }
 
     /**
@@ -31,8 +29,8 @@ public class Tools {
      * @param r
      * @return
      */
-    public static TaxiRow ParseRow(Row r) {
-        TaxiRow t = new TaxiRow();
+    public static YellowTaxiRow ParseRow(Row r) {
+        YellowTaxiRow t = new YellowTaxiRow();
         try {
             Calendar cal = Calendar.getInstance();
             cal.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -86,6 +84,17 @@ public class Tools {
 
     public static Integer getHour(String timestamp) {
         return Integer.parseInt(timestamp.substring(11,13));
+    }
+
+    public static Timestamp getTimestamp(){
+        return new Timestamp(System.currentTimeMillis());
+    }
+
+    public static String toMinutes(long milliseconds){
+        long minutes = (milliseconds/1000) /60;
+        long seconds = (milliseconds/1000) %60;
+        return String.format("%d min, %d sec (%dms)", minutes, seconds, milliseconds);
+
     }
 
 }

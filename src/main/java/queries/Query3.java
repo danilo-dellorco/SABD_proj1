@@ -12,24 +12,15 @@ import com.mongodb.client.MongoCollection;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function2;
-import org.apache.spark.api.java.function.VoidFunction;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.bson.Document;
-import org.bson.conversions.Bson;
 import scala.Tuple2;
 import scala.Tuple4;
-import utils.TaxiRow;
+import utils.YellowTaxiRow;
 import utils.ValQ3;
 import utils.Zone;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.PrintWriter;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
 import static utils.Tools.ParseRow;
@@ -44,7 +35,7 @@ public class Query3 extends Query{
     @Override
     public void execute() {
         //TODO la fase di filter forse va fatta nel pre-processamento rimuovendo le righe vuote
-        JavaRDD<TaxiRow> taxis = dataset.map(r -> ParseRow(r)).filter(v1->v1.getDOLocationID()!=0);
+        JavaRDD<YellowTaxiRow> taxis = dataset.map(r -> ParseRow(r)).filter(v1->v1.getDOLocationID()!=0);
 
         // RDD:=[location_id,statistics]
         JavaPairRDD<Long, ValQ3> aggregated = taxis.mapToPair(

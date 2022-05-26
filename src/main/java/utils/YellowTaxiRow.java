@@ -1,12 +1,8 @@
 package utils;
 
-import org.apache.spark.sql.Row;
-
 import java.io.Serializable;
-import java.sql.Timestamp;
-import java.time.format.DateTimeFormatter;
 
-public class TaxiRow implements Serializable {
+public class YellowTaxiRow implements Serializable {
     long VendorID;
     String tpep_pickup_datetime;
     String tpep_dropoff_datetime;
@@ -27,7 +23,7 @@ public class TaxiRow implements Serializable {
     Double congestion_surcharge;
     Double airport_fee;
 
-    public TaxiRow() {
+    public YellowTaxiRow() {
     }
 
     @Override

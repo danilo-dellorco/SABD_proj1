@@ -17,7 +17,7 @@ import org.apache.spark.sql.SparkSession;
 import org.bson.Document;
 import scala.Tuple2;
 import scala.Tuple4;
-import utils.TaxiRow;
+import utils.YellowTaxiRow;
 import utils.ValQ3;
 import utils.Zone;
 
@@ -35,7 +35,7 @@ public class Query4 extends Query{
     @Override
     public void execute() {
         //TODO la fase di filter forse va fatta nel pre-processamento rimuovendo le righe vuote
-        JavaRDD<TaxiRow> taxis = dataset.map(r -> ParseRow(r)).filter(v1->v1.getDOLocationID()!=0);
+        JavaRDD<YellowTaxiRow> taxis = dataset.map(r -> ParseRow(r)).filter(v1->v1.getDOLocationID()!=0);
 
         // RDD:=[location_id,statistics]
         JavaPairRDD<Long, ValQ3> aggregated = taxis.mapToPair(

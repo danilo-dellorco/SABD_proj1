@@ -17,11 +17,10 @@ import org.apache.spark.sql.SparkSession;
 import org.bson.Document;
 import scala.Tuple2;
 import utils.Payments;
-import utils.TaxiRow;
+import utils.YellowTaxiRow;
 import utils.Tools;
 import utils.ValQ2;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static utils.Tools.*;
@@ -32,7 +31,7 @@ public class Query2 extends Query{
     }
 
     public void execute() {
-        JavaRDD<TaxiRow> trips = dataset.map(r -> ParseRow(r));
+        JavaRDD<YellowTaxiRow> trips = dataset.map(r -> ParseRow(r));
         // TODO .cache()
 
         // RDD:=[time_slot,statistics]

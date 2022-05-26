@@ -46,8 +46,8 @@ public class Main {
         Query3 q3 = new Query3(spark, yellowRDD,collections.get(2), "QUERY 1 SQL");
         Query4 q4 = new Query4(spark, greenRDD,collections.get(3), "QUERY 2 SQL");
 
-        Query1SQL q1SQL = new Query1SQL(spark, yellowRDD,collections.get(3), "QUERY 1");
-        Query2SQL q2SQL = new Query2SQL(spark, yellowRDD,collections.get(4), "QUERY 2");
+        Query1SQL q1SQL = new Query1SQL(spark, yellowRDD,collections.get(4), "QUERY 1");
+        Query2SQL q2SQL = new Query2SQL(spark, yellowRDD,collections.get(5), "QUERY 2");
 
         switch (args[0]) {
             case ("Q1"):
@@ -87,40 +87,40 @@ public class Main {
     public static void initMongo() {
         MongoClient mongo = new MongoClient(new MongoClientURI(Config.MONGO_URL)); //add mongo-server to /etc/hosts
         MongoDatabase db = mongo.getDatabase(Config.MONGO_DB);
-        boolean collExists1 = db.listCollectionNames().into(new ArrayList<>()).contains(Config.MONGO_Q1);
-        if (collExists1) {
+        if (db.listCollectionNames().into(new ArrayList<>()).contains(Config.MONGO_Q1)) {
             db.getCollection(Config.MONGO_Q1).drop();
         }
-        boolean collExists2 = db.listCollectionNames().into(new ArrayList<>()).contains(Config.MONGO_Q2);
-        if (collExists2) {
+        if (db.listCollectionNames().into(new ArrayList<>()).contains(Config.MONGO_Q2)) {
             db.getCollection(Config.MONGO_Q2).drop();
         }
-        boolean collExists3 = db.listCollectionNames().into(new ArrayList<>()).contains(Config.MONGO_Q3);
-        if (collExists3) {
+        if (db.listCollectionNames().into(new ArrayList<>()).contains(Config.MONGO_Q3)) {
             db.getCollection(Config.MONGO_Q3).drop();
         }
-        boolean collExists4 = db.listCollectionNames().into(new ArrayList<>()).contains(Config.MONGO_Q1SQL);
-        if (collExists4) {
+        if (db.listCollectionNames().into(new ArrayList<>()).contains(Config.MONGO_Q4)) {
+            db.getCollection(Config.MONGO_Q4).drop();
+        }
+        if (db.listCollectionNames().into(new ArrayList<>()).contains(Config.MONGO_Q1SQL)) {
             db.getCollection(Config.MONGO_Q1SQL).drop();
         }
-        boolean collExists5 = db.listCollectionNames().into(new ArrayList<>()).contains(Config.MONGO_Q2SQL);
-        if (collExists5) {
+        if (db.listCollectionNames().into(new ArrayList<>()).contains(Config.MONGO_Q2SQL)) {
             db.getCollection(Config.MONGO_Q2SQL).drop();
         }
 
         db.createCollection(Config.MONGO_Q1);
-        db.createCollection(Config.MONGO_Q1SQL);
         db.createCollection(Config.MONGO_Q2);
-        db.createCollection(Config.MONGO_Q2SQL);
         db.createCollection(Config.MONGO_Q3);
+        db.createCollection(Config.MONGO_Q4);
+        db.createCollection(Config.MONGO_Q1SQL);
+        db.createCollection(Config.MONGO_Q2SQL);
 
         MongoCollection collection1 = db.getCollection(Config.MONGO_Q1);
         MongoCollection collection2 = db.getCollection(Config.MONGO_Q2);
         MongoCollection collection3 = db.getCollection(Config.MONGO_Q3);
+        MongoCollection collection4 = db.getCollection(Config.MONGO_Q4);
         MongoCollection collection1_SQL = db.getCollection(Config.MONGO_Q1SQL);
         MongoCollection collection2_SQL = db.getCollection(Config.MONGO_Q2SQL);
 
-        collections = Arrays.asList(collection1,collection2,collection3, collection1_SQL, collection2_SQL);
+        collections = Arrays.asList(collection1,collection2,collection3,collection4, collection1_SQL, collection2_SQL);
     }
 
     /**
@@ -129,13 +129,12 @@ public class Main {
      */
     public static void initSpark() {
         SparkConf conf = new SparkConf().setJars(new String[]{jar_path});
-        SparkSession sparkSession = SparkSession
+        spark = SparkSession
                 .builder()
                 .config(conf)
                 .master(spark_url)
                 .appName("SABD Proj 1")
                 .getOrCreate();
-        spark=sparkSession;
     }
 
     /**
@@ -143,15 +142,14 @@ public class Main {
      * @return
      */
     public static void loadDataset() {
-        JavaRDD<Row> rows;
         if (Config.DATA_MODE.equals("UNLIMITED")) {
-            rows = spark.read().option("header", "false").parquet(yellow_dataset_path).toJavaRDD();
+            yellowRDD = spark.read().option("header", "false").parquet(yellow_dataset_path).toJavaRDD();
+            greenRDD = spark.read().option("header", "false").parquet(green_dataset_path).toJavaRDD();
         }
         else {
-            rows = spark.read().option("header", "false").parquet(yellow_dataset_path).limit(Config.LIMIT_NUM).toJavaRDD();
+            yellowRDD = spark.read().option("header", "false").parquet(yellow_dataset_path).limit(Config.LIMIT_NUM).toJavaRDD();
+            greenRDD = spark.read().option("header", "false").parquet(green_dataset_path).limit(Config.LIMIT_NUM).toJavaRDD();
         }
-        yellowRDD = rows;
-        greenRDD = spark.read().option("header", "false").parquet(green_dataset_path).toJavaRDD();
     }
 
     /**

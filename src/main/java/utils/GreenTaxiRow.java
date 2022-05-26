@@ -2,7 +2,7 @@ package utils;
 
 import java.io.Serializable;
 
-public class YellowTaxiRow implements Serializable {
+public class GreenTaxiRow implements Serializable {
     long VendorID;
     String tpep_pickup_datetime;
     String tpep_dropoff_datetime;
@@ -23,7 +23,7 @@ public class YellowTaxiRow implements Serializable {
     Double congestion_surcharge;
     Double airport_fee;
 
-    public YellowTaxiRow() {
+    public GreenTaxiRow() {
     }
 
     @Override

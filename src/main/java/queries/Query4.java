@@ -7,7 +7,6 @@
 
 package queries;
 
-import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
@@ -17,7 +16,7 @@ import org.apache.spark.sql.SparkSession;
 import org.bson.Document;
 import scala.Tuple2;
 import scala.Tuple4;
-import utils.TaxiRow;
+import utils.YellowTaxiRow;
 import utils.ValQ3;
 import utils.Zone;
 
@@ -27,15 +26,15 @@ import static utils.Tools.ParseRow;
 
 public class Query4 extends Query{
 
-    public Query4(SparkSession spark, JavaRDD<Row> dataset, MongoCollection collection) {
-        super(spark, dataset, collection);
+    public Query4(SparkSession spark, JavaRDD<Row> dataset, MongoCollection collection, String name) {
+        super(spark, dataset, collection, name);
     }
 
 
     @Override
     public void execute() {
         //TODO la fase di filter forse va fatta nel pre-processamento rimuovendo le righe vuote
-        JavaRDD<TaxiRow> taxis = dataset.map(r -> ParseRow(r)).filter(v1->v1.getDOLocationID()!=0);
+        JavaRDD<YellowTaxiRow> taxis = dataset.map(r -> ParseRow(r)).filter(v1->v1.getDOLocationID()!=0);
 
         // RDD:=[location_id,statistics]
         JavaPairRDD<Long, ValQ3> aggregated = taxis.mapToPair(
@@ -124,15 +123,5 @@ public class Query4 extends Query{
             collection.insertOne(document);
 
         }
-
-        /**
-         * Stampa a schermo dei risultati
-         */
-        System.out.println("\n—————————————————————————————————————————————————————————— QUERY 3 ——————————————————————————————————————————————————————————");
-        FindIterable<Document> docs = collection.find();
-        for (Document doc:docs) {
-            System.out.println(doc);
-        }
-        System.out.println("—————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————\n");
     }
 }

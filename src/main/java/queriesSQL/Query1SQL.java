@@ -1,4 +1,4 @@
-package sparkSQL;
+package queriesSQL;
 
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
@@ -22,8 +22,9 @@ import java.util.List;
 import java.util.TimeZone;
 
 public class Query1SQL extends Query {
-    public Query1SQL(SparkSession spark, JavaRDD<Row> dataset, MongoCollection collection) {
-        super(spark, dataset, collection);
+    Dataset<Row> results;
+    public Query1SQL(SparkSession spark, JavaRDD<Row> dataset, MongoCollection collection, String name) {
+        super(spark, dataset, collection, name);
     }
 
     public Dataset<Row> createSchemaFromRDD(SparkSession spark, JavaRDD<Row> dataset) {
@@ -60,7 +61,7 @@ public class Query1SQL extends Query {
                 "count(*) AS occurrences " +
                 "FROM taxi_row GROUP BY month(tpep_dropoff_datatime)");
         values.createOrReplaceTempView("taxi_values");
-        Dataset<Row> results = spark.sql("SELECT month AS month_id, " +                                         // month-1 per riportare alla notazione originale 0-11
+        results = spark.sql("SELECT month AS month_id, " +                                         // month-1 per riportare alla notazione originale 0-11
                 "date_format(to_timestamp(string(month), 'M'), 'MMMM') AS month_name," +
                 " (tips/(total-tolls)) AS mean FROM taxi_values ORDER BY month ASC");
 
@@ -77,15 +78,14 @@ public class Query1SQL extends Query {
 
             collection.insertOne(doc);
         }
-
-        /**
-         * Stampa a schermo dei risultati
-         */
-        System.out.println("\n—————————————————————————————————————————————————————————— QUERY 1 SQL ——————————————————————————————————————————————————————");
-//        results.show();
-        System.out.println("—————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————\n");
-
 //        METODO ALTERNATIVO utilizzando metodi sql integrati di spark
 //        values.withColumn("mean", values.col("tips").divide((values.col("total").minus(values.col("tolls"))))).show();
+    }
+
+    @Override
+    public void printResults() {
+        System.out.println("\n—————————————————————————————————————————————————————————— "+this.getName()+" ——————————————————————————————————————————————————————————");
+        results.show();
+        System.out.print("—————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————\n");
     }
 }

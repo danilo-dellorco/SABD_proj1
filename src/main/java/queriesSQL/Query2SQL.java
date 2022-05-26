@@ -1,4 +1,4 @@
-package sparkSQL;
+package queriesSQL;
 
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
@@ -24,8 +24,10 @@ import java.util.List;
 import java.util.TimeZone;
 
 public class Query2SQL extends Query {
-    public Query2SQL(SparkSession spark, JavaRDD<Row> dataset, MongoCollection collection) {
-        super(spark, dataset, collection);
+    Dataset<Row> results;
+
+    public Query2SQL(SparkSession spark, JavaRDD<Row> dataset, MongoCollection collection, String name) {
+        super(spark, dataset, collection, name);
     }
 
     public Dataset<Row> createSchemaFromRDD(SparkSession spark, JavaRDD<Row> dataset) {
@@ -69,7 +71,7 @@ public class Query2SQL extends Query {
 
         mostPopularPaymentType.createOrReplaceTempView("mostPaymentType");
 
-        Dataset<Row> results = spark.sql("SELECT mostPaymentType.hour_slot, payment_type, counted, tip_avg, tip_stddev " +
+        results = spark.sql("SELECT mostPaymentType.hour_slot, payment_type, counted, tip_avg, tip_stddev " +
                 "FROM mostPaymentType JOIN values ON mostPaymentType.hour_slot = values.hour_slot " +
                 "ORDER BY mostPaymentType.hour_slot ASC");
 
@@ -90,12 +92,12 @@ public class Query2SQL extends Query {
 
             collection.insertOne(doc);
         }
+    }
 
-        /**
-         * Stampa a schermo dei risultati
-         */
-        System.out.println("\n—————————————————————————————————————————————————————————— QUERY 2 SQL ——————————————————————————————————————————————————————————");
-//        results.show();
-        System.out.println("—————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————\n");
+    @Override
+    public void printResults() {
+        System.out.println("\n—————————————————————————————————————————————————————————— "+this.getName()+" ——————————————————————————————————————————————————————————");
+        results.show();
+        System.out.print("—————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————\n");
     }
 }

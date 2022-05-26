@@ -41,13 +41,13 @@ public class Main {
         initMongo();
         turnOffLogger();
 
-        Query1 q1 = new Query1(spark, yellowRDD,collections.get(0), "QUERY 3");
-        Query2 q2 = new Query2(spark, yellowRDD,collections.get(1), "QUERY 4");
-        Query3 q3 = new Query3(spark, yellowRDD,collections.get(2), "QUERY 1 SQL");
-        Query4 q4 = new Query4(spark, greenRDD,collections.get(3), "QUERY 2 SQL");
+        Query1 q1 = new Query1(spark, yellowRDD,collections.get(0), "QUERY 1");
+        Query2 q2 = new Query2(spark, yellowRDD,collections.get(1), "QUERY 2");
+        Query3 q3 = new Query3(spark, yellowRDD,collections.get(2), "QUERY 3");
+        Query4 q4 = new Query4(spark, greenRDD,collections.get(3), "QUERY 4");
 
-        Query1SQL q1SQL = new Query1SQL(spark, yellowRDD,collections.get(4), "QUERY 1");
-        Query2SQL q2SQL = new Query2SQL(spark, yellowRDD,collections.get(5), "QUERY 2");
+        Query1SQL q1SQL = new Query1SQL(spark, yellowRDD,collections.get(4), "QUERY 1 SQL");
+        Query2SQL q2SQL = new Query2SQL(spark, yellowRDD,collections.get(5), "QUERY 2 SQL");
 
         switch (args[0]) {
             case ("Q1"):

@@ -82,11 +82,8 @@ public class Query1SQL extends Query {
          * Stampa a schermo dei risultati
          */
         System.out.println("\n—————————————————————————————————————————————————————————— QUERY 1 SQL ——————————————————————————————————————————————————————");
-        results.show();
+//        results.show();
         System.out.println("—————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————\n");
-
-
-
 
 //        METODO ALTERNATIVO utilizzando metodi sql integrati di spark
 //        values.withColumn("mean", values.col("tips").divide((values.col("total").minus(values.col("tolls"))))).show();

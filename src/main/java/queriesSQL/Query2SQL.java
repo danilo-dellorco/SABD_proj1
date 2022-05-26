@@ -73,8 +73,6 @@ public class Query2SQL extends Query {
                 "FROM mostPaymentType JOIN values ON mostPaymentType.hour_slot = values.hour_slot " +
                 "ORDER BY mostPaymentType.hour_slot ASC");
 
-        results.printSchema();
-
         /**
          * Salvataggio dei risultati su mongodb
          */
@@ -96,8 +94,8 @@ public class Query2SQL extends Query {
         /**
          * Stampa a schermo dei risultati
          */
-        System.out.println("\n—————————————————————————————————————————————————————————— QUERY 1 ——————————————————————————————————————————————————————————");
-        results.show();
-        System.out.println("—————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————\n");
+        System.out.println("\n—————————————————————————————————————————————————————————— QUERY 2 SQL ——————————————————————————————————————————————————————————");
+//        results.show();
+        System.out.println("—————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————\n");
     }
 }

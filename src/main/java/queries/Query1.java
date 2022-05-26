@@ -83,16 +83,5 @@ public class Query1 extends Query {
             collection.insertOne(document);
 
         }
-
-        /**
-         * Stampa a schermo dei risultati
-         */
-        System.out.println("\n—————————————————————————————————————————————————————————— QUERY 1 ——————————————————————————————————————————————————————————");
-        FindIterable<Document> docs = collection.find();
-        for (Document doc : docs) {
-            System.out.println(doc);
-        }
-        System.out.println("—————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————\n");
-
     }
 }

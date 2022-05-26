@@ -31,7 +31,7 @@ public class Main {
     public static String spark_url;
 
     // EXEC_MODE = {LOCAL,DOCKER}
-    public static final String EXEC_MODE = "LOCAL";
+    public static final String EXEC_MODE = "DOCKER";
     // DATA_MODE = {LIMITED,UNLIMITED}
     private static final String DATA_MODE = "UNLIMITED";
     private static final int LIMIT_NUM = 1000;

@@ -124,15 +124,5 @@ public class Query3 extends Query{
             collection.insertOne(document);
 
         }
-
-        /**
-         * Stampa a schermo dei risultati
-         */
-        System.out.println("\n—————————————————————————————————————————————————————————— QUERY 3 ——————————————————————————————————————————————————————————");
-        FindIterable<Document> docs = collection.find();
-        for (Document doc:docs) {
-            System.out.println(doc);
-        }
-        System.out.println("—————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————\n");
     }
 }

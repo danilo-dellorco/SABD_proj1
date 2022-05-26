@@ -6,7 +6,6 @@
 
 package queries;
 
-import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
@@ -26,8 +25,8 @@ import java.util.List;
 import static utils.Tools.*;
 
 public class Query2 extends Query{
-    public Query2(SparkSession spark, JavaRDD<Row> dataset, MongoCollection collection) {
-        super(spark, dataset, collection);
+    public Query2(SparkSession spark, JavaRDD<Row> dataset, MongoCollection collection, String name) {
+        super(spark, dataset, collection, name);
     }
 
     public void execute() {
@@ -143,7 +142,7 @@ public class Query2 extends Query{
             Double mean = r._2()._1().getTips();
             Double stdev = r._2()._1().getTips_stddev();
             Integer payment_id = Math.toIntExact(r._2()._2()._1());
-            String payment_name =  Payments.staticMap.get(payment_id);
+            String payment_name = Payments.staticMap.get(payment_id);
             Integer payment_occ = r._2()._2()._2();
 
             Document document = new Document();
@@ -155,7 +154,6 @@ public class Query2 extends Query{
             document.append("payment_occ", payment_occ);
 
             collection.insertOne(document);
-
         }
 
     }

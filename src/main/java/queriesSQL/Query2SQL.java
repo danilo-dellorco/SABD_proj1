@@ -1,4 +1,4 @@
-package sparkSQL;
+package queriesSQL;
 
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
@@ -24,8 +24,10 @@ import java.util.List;
 import java.util.TimeZone;
 
 public class Query2SQL extends Query {
-    public Query2SQL(SparkSession spark, JavaRDD<Row> dataset, MongoCollection collection) {
-        super(spark, dataset, collection);
+    Dataset<Row> results;
+
+    public Query2SQL(SparkSession spark, JavaRDD<Row> dataset, MongoCollection collection, String name) {
+        super(spark, dataset, collection, name);
     }
 
     public Dataset<Row> createSchemaFromRDD(SparkSession spark, JavaRDD<Row> dataset) {
@@ -43,11 +45,11 @@ public class Query2SQL extends Query {
         sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
 
         JavaRDD<Row> rowRDD = dataset.map((Function<Row, Row>)
-                v1 -> {
+                v1 ->{
                     Timestamp ts = v1.getTimestamp(0);
                     cal.setTime(ts);
                     Timestamp ts_zone = Timestamp.valueOf(sdf.format(cal.getTime()));
-                    return RowFactory.create(ts_zone, v1.getLong(1), v1.getLong(2), v1.getDouble(4));
+            return RowFactory.create(ts_zone, v1.getLong(1), v1.getLong(2), v1.getDouble(4));
                 });
         return spark.createDataFrame(rowRDD, schema);
     }
@@ -69,7 +71,7 @@ public class Query2SQL extends Query {
 
         mostPopularPaymentType.createOrReplaceTempView("mostPaymentType");
 
-        Dataset<Row> results = spark.sql("SELECT mostPaymentType.hour_slot, payment_type, counted, tip_avg, tip_stddev " +
+        results = spark.sql("SELECT mostPaymentType.hour_slot, payment_type, counted, tip_avg, tip_stddev " +
                 "FROM mostPaymentType JOIN values ON mostPaymentType.hour_slot = values.hour_slot " +
                 "ORDER BY mostPaymentType.hour_slot ASC");
 
@@ -77,7 +79,7 @@ public class Query2SQL extends Query {
          * Salvataggio dei risultati su mongodb
          */
         List<Row> resultsList = results.collectAsList();
-        for (Row r : resultsList) {
+        for (Row r : resultsList){
             Integer payment = Integer.valueOf((int) r.getLong(1));      // Casting for bson documents
             Integer counted = Integer.valueOf((int) r.getLong(2));      // Casting for bson documents
             Document doc = new Document();
@@ -90,6 +92,12 @@ public class Query2SQL extends Query {
 
             collection.insertOne(doc);
         }
+    }
 
+    @Override
+    public void printResults() {
+        System.out.println("\n—————————————————————————————————————————————————————————— "+this.getName()+" ——————————————————————————————————————————————————————————");
+        results.show();
+        System.out.print("—————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————\n");
     }
 }

@@ -7,7 +7,6 @@
 
 package queries;
 
-import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
@@ -27,8 +26,8 @@ import static utils.Tools.ParseRow;
 
 public class Query4 extends Query{
 
-    public Query4(SparkSession spark, JavaRDD<Row> dataset, MongoCollection collection) {
-        super(spark, dataset, collection);
+    public Query4(SparkSession spark, JavaRDD<Row> dataset, MongoCollection collection, String name) {
+        super(spark, dataset, collection, name);
     }
 
 
@@ -124,15 +123,5 @@ public class Query4 extends Query{
             collection.insertOne(document);
 
         }
-
-        /**
-         * Stampa a schermo dei risultati
-         */
-        System.out.println("\n—————————————————————————————————————————————————————————— QUERY 3 ——————————————————————————————————————————————————————————");
-        FindIterable<Document> docs = collection.find();
-        for (Document doc:docs) {
-            System.out.println(doc);
-        }
-        System.out.println("—————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————\n");
     }
 }

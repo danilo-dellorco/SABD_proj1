@@ -34,7 +34,7 @@ public class Query3 extends Query{
     @Override
     public void execute() {
         //TODO la fase di filter forse va fatta nel pre-processamento rimuovendo le righe vuote
-        JavaRDD<YellowTaxiRow> taxis = dataset.map(r -> ParseRow(r)).filter(v1->v1.getDOLocationID()!=0);
+        JavaRDD<YellowTaxiRow> taxis = dataset.map(r -> ParseRow(r));
 
         // RDD:=[location_id,statistics]
         JavaPairRDD<Long, ValQ3> aggregated = taxis.mapToPair(

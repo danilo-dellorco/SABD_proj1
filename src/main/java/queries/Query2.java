@@ -31,13 +31,11 @@ public class Query2 extends Query{
 
     public void execute() {
         JavaRDD<YellowTaxiRow> trips = dataset.map(r -> ParseRow(r));
-        // TODO .cache()
 
         // RDD:=[time_slot,statistics]
         JavaPairRDD<Integer, ValQ2> aggregated = trips.mapToPair(r ->
                     new Tuple2<>(Tools.getHour(r.getTpep_dropoff_datetime()),
-                    new ValQ2(r.getTip_amount(), r.getPayment_type(),1))).sortByKey();
-        //TODO .cache() credo
+                    new ValQ2(r.getTip_amount(), r.getPayment_type(),1)));
 
 
         /**
@@ -128,7 +126,7 @@ public class Query2 extends Query{
          * Unione dei metodi di pagamento con le statistiche calcolate
          */
         // RDD:=[time_slot,(statistics,(top_payment,occurrences)))]
-        JavaPairRDD<Integer, Tuple2<ValQ2, Tuple2<Long, Integer>>> final_joined = deviation.sortByKey()
+        JavaPairRDD<Integer, Tuple2<ValQ2, Tuple2<Long, Integer>>> final_joined = deviation
                 .join(top_payments)
                 .sortByKey();
 

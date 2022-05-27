@@ -5,7 +5,7 @@ public class Config {
     public static final String DATA_MODE = "UNLIMITED"; //{LIMITED,UNLIMITED}
     public static final int LIMIT_NUM = 1000;
 
-    public static final String NUM_WORKERS = "1";
+    public static final String NUM_WORKERS = "3";
     public static final String LOCAL_SPARK_URL = "local["+NUM_WORKERS+"]";
     public static final String LOCAL_DATA_URL = "data";
 

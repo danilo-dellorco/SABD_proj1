@@ -127,7 +127,6 @@ public class Main {
 
     /**
      * Inizializza Spark ritornando la spark session
-     * @return
      */
     public static void initSpark() {
         SparkConf conf = new SparkConf().setJars(new String[]{jar_path});
@@ -141,7 +140,6 @@ public class Main {
 
     /**
      * Carica il dataset nel sistema, convertendolo da Parquet in un RDD
-     * @return
      */
     public static void loadDataset() {
         if (Config.DATA_MODE.equals("UNLIMITED")) {

@@ -15,9 +15,6 @@ import java.util.Scanner;
 import java.util.TimeZone;
 
 public class Tools {
-    public static void printRDD(JavaRDD<YellowTaxiRow> taxiRows) {
-        taxiRows.foreach((VoidFunction<YellowTaxiRow>) r -> System.out.println(r.toString()));
-    }
 
     /**
      * Mette in attesa il programma fino all'inserimento di input utente
@@ -28,39 +25,6 @@ public class Tools {
         Scanner scanner = new Scanner(System.in);
         scanner.nextLine();
     }
-
-    /**
-     * Genera un oggetto TaxiRow partendo da un Row generico del file parquet
-     *
-     * @param r
-     * @return
-     */
-    public static YellowTaxiRow ParseRow(Row r) {
-        YellowTaxiRow t = new YellowTaxiRow();
-        try {
-            Calendar cal = Calendar.getInstance();
-            cal.setTimeZone(TimeZone.getTimeZone("UTC"));
-            java.sql.Timestamp t1 = r.getTimestamp(0);
-            cal.setTime(t1);
-            SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss");
-            sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-
-            String ts = sdf.format(cal.getTime());
-
-            t.setTpep_dropoff_datetime(ts);
-            t.setDOLocationID(r.getLong(1));
-            t.setPayment_type(r.getLong(2));
-            t.setFare_amount(r.getDouble(3));
-            t.setTip_amount(r.getDouble(4));
-            t.setTolls_amount(r.getDouble(5));
-            t.setTotal_amount(r.getDouble(6));
-            t.setPassenger_count(r.getDouble(7));
-        } catch (NullPointerException e) {
-            // Ignore rows with null fields
-        }
-        return t;
-    }
-
     /**
      * Ritorna la tupla (method,occurrences) relativa al metodo di pagamento più usata nella fascia oraria
      *

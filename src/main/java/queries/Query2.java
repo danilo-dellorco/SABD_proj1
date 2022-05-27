@@ -16,7 +16,6 @@ import org.apache.spark.sql.SparkSession;
 import org.bson.Document;
 import scala.Tuple2;
 import utils.Payments;
-import utils.YellowTaxiRow;
 import utils.Tools;
 import utils.ValQ2;
 
@@ -24,19 +23,16 @@ import java.util.List;
 
 import static utils.Tools.*;
 
-public class Query2 extends Query{
+public class Query2 extends Query {
     public Query2(SparkSession spark, JavaRDD<Row> dataset, MongoCollection collection, String name) {
         super(spark, dataset, collection, name);
     }
 
     public void execute() {
-        JavaRDD<YellowTaxiRow> trips = dataset.map(r -> ParseRow(r));
-        // TODO .cache()
-
         // RDD:=[time_slot,statistics]
-        JavaPairRDD<Integer, ValQ2> aggregated = trips.mapToPair(r ->
-                    new Tuple2<>(Tools.getHour(r.getTpep_dropoff_datetime()),
-                    new ValQ2(r.getTip_amount(), r.getPayment_type(),1))).sortByKey();
+        JavaPairRDD<Integer, ValQ2> aggregated = dataset.mapToPair(r ->
+                    new Tuple2<>(Tools.getHour(r.getTimestamp(0).toString()),
+                    new ValQ2(r.getDouble(4), r.getLong(2),1)));
         //TODO .cache() credo
 
 
@@ -54,7 +50,7 @@ public class Query2 extends Query{
 
         // RDD:=[(time_slot,payment),occurrences]
         JavaPairRDD<Tuple2<Integer, Long>,Integer> red_pay = aggr_pay.reduceByKey((Function2<Integer, Integer, Integer>) (v1, v2) -> {
-            Integer occ = v1+ v2;
+            Integer occ = v1 + v2;
             return occ;
         });
 
@@ -129,8 +125,7 @@ public class Query2 extends Query{
          */
         // RDD:=[time_slot,(statistics,(top_payment,occurrences)))]
         JavaPairRDD<Integer, Tuple2<ValQ2, Tuple2<Long, Integer>>> final_joined = deviation.sortByKey()
-                .join(top_payments)
-                .sortByKey();
+                .join(top_payments);
 
         List<Tuple2<Integer, Tuple2<ValQ2, Tuple2<Long, Integer>>>> result = final_joined.collect();
 

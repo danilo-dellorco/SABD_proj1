@@ -2,29 +2,24 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import subprocess
 import urllib.request
 import requests
+import os
 
 class handler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        self.send_response(200)
-        self.send_header('Content-type','text/html')
-        self.end_headers()
+    count = 0;
 
-        message = "Hello, World! Here is a GET response"
-        self.wfile.write(bytes(message, "utf8"))
-
-    def do_POST(self):
-        resp = requests.post("http://localhost:8090/nifi-api/flowfile-queues/fbead702-0180-1000-8839-894da921bdb4/listing-requests").json()
-        print(resp)
-        flow_id = resp.get("listingRequest").get("id")
-        print(flow_id)
-        filename = requests.get("http://localhost:8090/nifi-api/flowfile-queues/fbead702-0180-1000-8839-894da921bdb4/listing-requests/" + flow_id).json().get("listingRequest").get("flowFileSummaries")
-        print(filename)
-        porcodio = filename[0].get("filename")
-        if (porcodio == "yellow.parquet"):
+    def do_PUT(self):
+        # first flow for yellow-taxi dataset
+        if (self.count == 0):
             subprocess.call(['sh', './stop-nifi-flow.sh'])
-            # cambiare filename attribute per il flusso nuovo verde
-        
+            resp = requests.put("http://localhost:8090/nifi-api/55931828-e88b-3257-8990-11b8066f15d9", data = {'filename' : 'green-taxi.parquet'})
+            print(resp.content)
+            self.count += 1
+    
+        # second flow for green-taxi dataset, then restore attribute filename for new executions
+        print("so arrivato quaaaaaaaaaaaaaaaaaaaaaaaaa")
         subprocess.call(['sh', './stop-nifi-flow.sh'])
+        resp = requests.put("http://localhost:8090/nifi-api/55931828-e88b-3257-8990-11b8066f15d9", data = {'filename' : 'yellow-taxi.parquet'})
+        os.exit()
 
 
         
@@ -43,5 +38,4 @@ with HTTPServer(('172.17.0.1', 5555), handler) as server:
             print("Nifi not running...")
         
     subprocess.call(['sh', './start-nifi-flow.sh'])
-    
     server.serve_forever()

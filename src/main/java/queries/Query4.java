@@ -16,13 +16,10 @@ import org.apache.spark.sql.SparkSession;
 import org.bson.Document;
 import scala.Tuple2;
 import scala.Tuple4;
-import utils.YellowTaxiRow;
 import utils.ValQ3;
 import utils.Zone;
 
 import java.util.List;
-
-import static utils.Tools.ParseRow;
 
 public class Query4 extends Query{
 
@@ -33,13 +30,10 @@ public class Query4 extends Query{
 
     @Override
     public void execute() {
-        //TODO la fase di filter forse va fatta nel pre-processamento rimuovendo le righe vuote
-        JavaRDD<YellowTaxiRow> taxis = dataset.map(r -> ParseRow(r)).filter(v1->v1.getDOLocationID()!=0);
-
         // RDD:=[location_id,statistics]
-        JavaPairRDD<Long, ValQ3> aggregated = taxis.mapToPair(
-                r -> new Tuple2<>(r.getDOLocationID(),
-                     new ValQ3(r.getPassenger_count(), r.getFare_amount(), 1)));
+        JavaPairRDD<Long, ValQ3> aggregated = dataset.mapToPair(
+                r -> new Tuple2<>(r.getLong(1),
+                     new ValQ3(r.getDouble(7), r.getDouble(3), 1)));
 
         // RDD:=[location_id,statistics_aggr]
         JavaPairRDD<Long, ValQ3> reduced = aggregated.reduceByKey((Function2<ValQ3, ValQ3, ValQ3>) (v1, v2) -> {

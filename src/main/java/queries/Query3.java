@@ -16,15 +16,13 @@ import org.apache.spark.sql.SparkSession;
 import org.bson.Document;
 import scala.Tuple2;
 import scala.Tuple4;
-import utils.YellowTaxiRow;
 import utils.ValQ3;
 import utils.Zone;
 
 import java.util.List;
 
-import static utils.Tools.ParseRow;
 
-public class Query3 extends Query{
+public class Query3 extends Query {
 
     public Query3(SparkSession spark, JavaRDD<Row> dataset, MongoCollection collection, String name) {
         super(spark, dataset, collection, name);
@@ -33,13 +31,10 @@ public class Query3 extends Query{
 
     @Override
     public void execute() {
-        //TODO la fase di filter forse va fatta nel pre-processamento rimuovendo le righe vuote
-        JavaRDD<YellowTaxiRow> taxis = dataset.map(r -> ParseRow(r)).filter(v1->v1.getDOLocationID()!=0);
-
         // RDD:=[location_id,statistics]
-        JavaPairRDD<Long, ValQ3> aggregated = taxis.mapToPair(
-                r -> new Tuple2<>(r.getDOLocationID(),
-                     new ValQ3(r.getPassenger_count(), r.getFare_amount(), 1)));
+        JavaPairRDD<Long, ValQ3> aggregated = dataset.mapToPair(
+                r -> new Tuple2<>(r.getLong(1),
+                     new ValQ3(r.getDouble(7), r.getDouble(3), 1)));
 
         // RDD:=[location_id,statistics_aggr]
         JavaPairRDD<Long, ValQ3> reduced = aggregated.reduceByKey((Function2<ValQ3, ValQ3, ValQ3>) (v1, v2) -> {
@@ -63,6 +58,7 @@ public class Query3 extends Query{
 
         // RDD:=[location_id,statistics_stdev_iteration]
         JavaPairRDD<Long, Tuple2<ValQ3, ValQ3>> joined = aggregated.join(statistics);
+
         JavaPairRDD<Long, ValQ3> iterations = joined.mapToPair(
                 r -> {
                     Double fare_mean = r._2()._2().getFare();
@@ -72,6 +68,7 @@ public class Query3 extends Query{
 
                     return new Tuple2<>(r._1(), r._2()._2());
                 });
+
 
         // RDD:=[location_id,statistics_stdev_aggregated]
         JavaPairRDD<Long, ValQ3> stddev_aggr = iterations.reduceByKey((Function2<ValQ3, ValQ3, ValQ3>) (v1, v2) -> {
@@ -91,6 +88,7 @@ public class Query3 extends Query{
                     return new Tuple2<>(r._1(), v);
                 });
 
+
         // Swap della chiave con il numero di occorrenze
         // RDD:=[occurrences,(location_id,passengers,fare,fare_stdev))]
         JavaPairRDD<Integer, Tuple4<Long, Double, Double, Double>> sorted = deviation
@@ -107,18 +105,22 @@ public class Query3 extends Query{
         // Top 5 dei risultati in base al numero di occorrenze
         List<Tuple2<Integer, Tuple4<Long, Double, Double, Double>>> top = sorted.take(5);
 
+        aggregated.map(r -> r._2().getFare().toString());
+
         /**
          * Salvataggio dei risultati su mongodb
          */
         for (Tuple2<Integer, Tuple4<Long, Double, Double, Double>> t : top) {
             Integer zoneId = Math.toIntExact(t._2()._1());
             String zoneName =  Zone.zoneMap.get(zoneId);
-            Integer occ = t._1();
 
             Document document = new Document();
             document.append("zone_id", zoneId);
             document.append("zone_name", zoneName);
-            document.append("occurrences", occ);
+            document.append("passenger_mean", t._2()._2());
+            document.append("fare_mean", t._2()._3());
+            document.append("fare_stdev", t._2()._4());
+            document.append("occurrences", t._1());
 
             collection.insertOne(document);
 

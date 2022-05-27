@@ -15,12 +15,9 @@ import org.bson.Document;
 import scala.Tuple2;
 import utils.Month;
 import utils.ValQ1;
-import utils.YellowTaxiRow;
 import utils.Tools;
 
 import java.util.List;
-
-import static utils.Tools.ParseRow;
 //TODO Ci stanno dei dati con mesi diversi da Dicembre-Gennaio-Febbraio
 
 @SuppressWarnings("ALL")
@@ -32,13 +29,11 @@ public class Query1 extends Query {
 
     @Override
     public void execute() {
-        JavaRDD<YellowTaxiRow> trips = dataset.map(r -> ParseRow(r));
-
         // RDD:=[month,values]
-        JavaPairRDD<Integer, ValQ1> taxiRows = trips.mapToPair(
+        JavaPairRDD<Integer, ValQ1> taxiRows = dataset.mapToPair(
                 r -> {
-                    Integer ts = Tools.getMonth(r.getTpep_dropoff_datetime());
-                    ValQ1 v1 = new ValQ1(r.getTip_amount(),r.getTotal_amount(),r.getTolls_amount());
+                    Integer ts = Tools.getMonth(r.getTimestamp(0));
+                    ValQ1 v1 = new ValQ1(r.getDouble(4),r.getDouble(6),r.getDouble(5));
                     return new Tuple2<>(ts, v1);
                 });
 

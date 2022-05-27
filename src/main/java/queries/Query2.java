@@ -16,7 +16,6 @@ import org.apache.spark.sql.SparkSession;
 import org.bson.Document;
 import scala.Tuple2;
 import utils.Payments;
-import utils.YellowTaxiRow;
 import utils.Tools;
 import utils.ValQ2;
 
@@ -30,12 +29,11 @@ public class Query2 extends Query{
     }
 
     public void execute() {
-        JavaRDD<YellowTaxiRow> trips = dataset.map(r -> ParseRow(r));
 
         // RDD:=[time_slot,statistics]
-        JavaPairRDD<Integer, ValQ2> aggregated = trips.mapToPair(r ->
-                    new Tuple2<>(Tools.getHour(r.getTpep_dropoff_datetime()),
-                    new ValQ2(r.getTip_amount(), r.getPayment_type(),1)));
+        JavaPairRDD<Integer, ValQ2> aggregated = dataset.mapToPair(r ->
+                    new Tuple2<>(Tools.getHour(r.getTimestamp(0)),
+                    new ValQ2(r.getDouble(4), r.getLong(2),1)));
 
 
         /**
@@ -69,7 +67,6 @@ public class Query2 extends Query{
         /**
          * Calcolo della media e deviazione standard di 'tips' per ogni fascia oraria
          */
-
         // RDD:=[time_slot,statistics_occurrences]
         JavaPairRDD<Integer, ValQ2> reduced = aggregated.reduceByKey((Function2<ValQ2, ValQ2, ValQ2>) (v1, v2) -> {
             Double tips = v1.getTips() + v2.getTips();
@@ -90,9 +87,6 @@ public class Query2 extends Query{
 
         JavaPairRDD<Integer, Tuple2<ValQ2, ValQ2>> joined = aggregated.join(statistics);
 
-//        System.out.println("JOINEEEEEEED");
-//        joined.foreach((VoidFunction<Tuple2<Integer, Tuple2<ValQ2, ValQ2>>>) r->System.out.println(r.toString()));
-
         // RDD:=[time_slot,statistics_deviation_it]
         JavaPairRDD<Integer, ValQ2> iterations = joined.mapToPair(
                 r -> {
@@ -110,7 +104,6 @@ public class Query2 extends Query{
             ValQ2 v = new ValQ2(v1.getTips(), v1.getOccurrences(), v1.getPayment_type(), tips_total_stddev);
             return v;
         });
-//        stddev_aggr.foreach((VoidFunction<Tuple2<Integer, ValQ2>>) r -> System.out.println(r.toString()));
 
         // RDD:=[time_slot,statistics_deviation]
         JavaPairRDD<Integer, ValQ2> deviation = stddev_aggr.mapToPair(

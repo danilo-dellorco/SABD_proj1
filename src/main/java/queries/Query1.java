@@ -14,6 +14,7 @@ import org.apache.spark.sql.SparkSession;
 import org.bson.Document;
 import scala.Tuple2;
 import utils.Month;
+import utils.ValQ1;
 import utils.YellowTaxiRow;
 import utils.Tools;
 
@@ -31,24 +32,23 @@ public class Query1 extends Query {
 
     @Override
     public void execute() {
+        JavaRDD<YellowTaxiRow> trips = dataset.map(r -> ParseRow(r));
 
         // RDD:=[month,values]
-        //TODO un ValQ1 invece di tutto Taxi Row
-        JavaPairRDD<Integer, YellowTaxiRow> taxiRows = dataset.mapToPair(
+        JavaPairRDD<Integer, ValQ1> taxiRows = trips.mapToPair(
                 r -> {
-                    YellowTaxiRow tr = ParseRow(r);
-                    Integer ts = Tools.getMonth(tr.getTpep_dropoff_datetime());
-                    return new Tuple2<>(ts, tr);
+                    Integer ts = Tools.getMonth(r.getTpep_dropoff_datetime());
+                    ValQ1 v1 = new ValQ1(r.getTip_amount(),r.getTotal_amount(),r.getTolls_amount());
+                    return new Tuple2<>(ts, v1);
                 });
 
         // RDD:=[month,values_aggr]
-        // TODO valutare creazione classe ValQ1, perchè usando TaxiRow dovremmo settare anche tutti gli altri campi che sono inutili per la query
-        JavaPairRDD<Integer, YellowTaxiRow> reduced = taxiRows.reduceByKey((Function2<YellowTaxiRow, YellowTaxiRow, YellowTaxiRow>) (v1, v2) -> {
+        JavaPairRDD<Integer, ValQ1> reduced = taxiRows.reduceByKey((Function2<ValQ1, ValQ1, ValQ1>) (v1, v2) -> {
             Double tips = v1.getTip_amount() + v2.getTip_amount();
             Double total = v1.getTotal_amount() + v2.getTotal_amount();
             Double tolls = v1.getTolls_amount() + v2.getTolls_amount();
 
-            YellowTaxiRow v = new YellowTaxiRow();
+            ValQ1 v = new ValQ1();
             v.setTip_amount(tips);
             v.setTotal_amount(total);
             v.setTolls_amount(tolls);

@@ -3,84 +3,63 @@ package utils;
 import java.io.Serializable;
 
 public class ValQ1 implements Serializable {
-    Double tips;
-    Integer occurrences;
-    Long payment_type;
-    Double tips_stddev;
+    Double tip_amount;
+    Double total_amount;
+    Double tolls_amount;
+    Double mean;
 
-    public ValQ1(Double tips, Integer occurrences) {
-        setTips(tips);
-        setOccurrences(occurrences);
+    public ValQ1(Double tip_amount, Double total_amount, Double tolls_amount) {
+        this.tip_amount = tip_amount;
+        this.total_amount = total_amount;
+        this.tolls_amount = tolls_amount;
     }
 
-    public ValQ1(Double tips, Double tips_stddev, Integer occurrences) {
-        setTips(tips);
-        setTips_stddev(tips_stddev);
-        setOccurrences(occurrences);
+    public ValQ1() {
+
     }
 
-    public ValQ1(Double tips, Integer occurrences, Long payment_type, Double tips_stddev) {
-        this.tips = tips;
-        this.occurrences = occurrences;
-        this.payment_type = payment_type;
-        this.tips_stddev = tips_stddev;
+    public Double getTip_amount() {
+        return tip_amount;
     }
 
-    public ValQ1(Double tips_mean, Integer occurrences, Double tips_dev) {
-        setTips(tips_mean);
-        setOccurrences(occurrences);
-        setTips_stddev(tips_dev);
+    public void setTip_amount(Double tip_amount) {
+        this.tip_amount = tip_amount;
+    }
+
+    public Double getTotal_amount() {
+        return total_amount;
+    }
+
+    public void setTotal_amount(Double total_amount) {
+        this.total_amount = total_amount;
+    }
+
+    public Double getTolls_amount() {
+        return tolls_amount;
+    }
+
+    public void setTolls_amount(Double tolls_amount) {
+        this.tolls_amount = tolls_amount;
+    }
+
+    public Double getMean() {
+        return mean;
+    }
+
+    public void setMean(Double mean) {
+        this.mean = mean;
     }
 
     @Override
     public String toString() {
-        return "ValQ2{" +
-                "tips=" + tips +
-                ", occurrences=" + occurrences +
-                ", payment_type=" + payment_type +
-                ", tips_stddev=" + tips_stddev +
+        return "ValQ1{" +
+                "tip_amount=" + tip_amount +
+                ", total_amount=" + total_amount +
+                ", tolls_amount=" + tolls_amount +
+                ", mean=" + mean +
                 '}';
     }
-
-    public ValQ1(Double tips, Long payment_type, Integer occurrences) {
-        setTips(tips);
-        setTips_stddev(tips_stddev);
-        setPayment_type(payment_type);
-        setOccurrences(occurrences);
-    }
-
-    public Double getTips() {
-        return tips;
-    }
-
-    public void setTips(Double tips) {
-        this.tips = tips;
-    }
-
-    public Double getTips_stddev() {
-        return tips_stddev;
-    }
-
-    public void setTips_stddev(Double tips_stddev) {
-        this.tips_stddev = tips_stddev;
-    }
-
-    public Integer getOccurrences() {
-        return occurrences;
-    }
-
-    public void setOccurrences(Integer occurrences) {
-        this.occurrences = occurrences;
-    }
-
-    public Long getPayment_type() {
-        return payment_type;
-    }
-
-    public void setPayment_type(Long payment_type) {
-        this.payment_type = payment_type;
-    }
-
 }
+
 
 

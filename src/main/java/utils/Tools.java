@@ -104,7 +104,7 @@ public class Tools {
     }
 
     public static void printSystemSpecs() {
-        System.out.println("\n—————————————————————————————————————————————————————————— Environment Specs ——————————————————————————————————————————————————————————");
+        System.out.println("\n————————————————————————————————————————————————————— Environment Specs —————————————————————————————————————————————————————");
         String nameOS = System.getProperty("os.name");
         String versionOS = System.getProperty("os.version");
         String architectureOS = System.getProperty("os.arch");

@@ -2,7 +2,7 @@ version: '2'
 
 services:
   spark-master:
-    image: docker.io/bitnami/spark:latest
+    image: docker.io/bitnami/spark:3.2.1
     container_name: spark-master
     environment:
       - SPARK_MODE=master
@@ -15,9 +15,9 @@ services:
       - '7077:7077'
       - '4040:4040'
 
-  spark-worker:
-    image: docker.io/bitnami/spark:latest
-    container_name: spark-worker
+  spark-worker1:
+    image: docker.io/bitnami/spark:3.2.1
+    container_name: spark-worker1
     environment:
       - SPARK_MODE=worker
       - SPARK_MASTER_URL=spark://spark-master:7077
@@ -28,18 +28,18 @@ services:
       - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
       - SPARK_SSL_ENABLED=no
 
-  #spark-worker1:
-  #  image: docker.io/bitnami/spark:latest
-  #  container_name: spark-worker1
-  #  environment:
-  #    - SPARK_MODE=worker
-  #    - SPARK_MASTER_URL=spark://spark-master:7077
-  #    - SPARK_WORKER_MEMORY=1G
-  #    - SPARK_WORKER_CORES=1
-  #    - SPARK_RPC_AUTHENTICATION_ENABLED=no
-  #    - SPARK_RPC_ENCRYPTION_ENABLED=no
-  #    - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
-  #    - SPARK_SSL_ENABLED=no
+  spark-worker2:
+    image: docker.io/bitnami/spark:3.2.1
+    container_name: spark-worker2
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_MEMORY=1G
+      - SPARK_WORKER_CORES=1
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
 
   
   # flag -d da riga di comando ma pare che funziona lo stesso
@@ -101,6 +101,12 @@ services:
       - ../nifi/logs:/opt/nifi/nifi-current/logs
       - ../nifi/data:/opt/nifi/nifi-current/data
       - ../nifi/conf:/opt/nifi/nifi-current/conf
+
+  mongo-server:
+    image: mongo:latest
+    container_name: mongo-server
+    ports:
+      - '27017:27017'
 
 networks:
   default:

@@ -1,6 +1,6 @@
 package utils;
 
-import scala.Serializable;
+import java.io.Serializable;
 
 public class ValQ2 implements Serializable {
     Double tips;

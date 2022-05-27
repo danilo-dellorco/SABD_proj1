@@ -27,3 +27,4 @@ target/
 nifi/content-repository/*
 nifi/logs/*
 *.iml
+data/

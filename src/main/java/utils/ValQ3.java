@@ -1,6 +1,6 @@
 package utils;
 
-import scala.Serializable;
+import java.io.Serializable;
 
 public class ValQ3 implements Serializable {
     Double passengers;

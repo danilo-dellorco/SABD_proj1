@@ -78,14 +78,12 @@ public class Query1SQL extends Query {
 
             collection.insertOne(doc);
         }
-//        METODO ALTERNATIVO utilizzando metodi sql integrati di spark
-//        values.withColumn("mean", values.col("tips").divide((values.col("total").minus(values.col("tolls"))))).show();
     }
 
     @Override
     public void printResults() {
         System.out.println("\n———————————————————————————————————————————————————————— "+this.getName()+" ————————————————————————————————————————————————————————");
         results.show();
-        System.out.print("—————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————\n");
+        System.out.printf("—————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————\n");
     }
 }

@@ -23,7 +23,7 @@ public class Tools {
      * Mette in attesa il programma fino all'inserimento di input utente
      */
     public static void promptEnterKey() {
-        System.out.println("Running Spark WebUI on http://localhost:4040/jobs/");
+        System.out.println("Running Spark WebUI on http://spark-master:4040/jobs/");
         System.out.println("Double press \"ENTER\" to end application...");
         Scanner scanner = new Scanner(System.in);
         scanner.nextLine();

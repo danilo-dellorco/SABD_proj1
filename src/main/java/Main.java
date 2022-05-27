@@ -12,7 +12,9 @@ import queries.*;
 import queriesSQL.Query1SQL;
 import queriesSQL.Query2SQL;
 import utils.Config;
+import utils.Tools;
 
+import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,11 +38,11 @@ public class Main {
     //TODO vedere il caching per gli RDD riacceduti
     //TODO rimuovere i sortbykey intermedi perchè sono wide transformation. Non dovrebbero avere utilità pratiche ma li usavamo solo per i print intermedi (sopratutto query2)
     //TODO vedere i DAG delle query e togliere cose inutili
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException, InterruptedException {
         setExecMode();
-        initSpark();
-        loadDataset();
-        initMongo();
+        long sparkTime = initSpark();
+        long dataTime = loadDataset();
+        long mongoTime = initMongo();
         turnOffLogger();
 
         Query1 q1 = new Query1(spark, yellowRDD,collections.get(0), "QUERY 1");
@@ -71,14 +73,13 @@ public class Main {
                 query=q2SQL;
                 break;
         }
-
-        printSystemSpecs();
         Timestamp start = getTimestamp();
         query.execute();
         Timestamp end = getTimestamp();
-        long exec = end.getTime() - start.getTime();
+        long queryTime = end.getTime() - start.getTime();
+
         query.printResults();
-        System.out.println(String.format("%s execution time: %s", query.getName(), toMinutes(exec)));
+        printResultAnalysis(query.getName(),sparkTime, dataTime, mongoTime, queryTime);
         promptEnterKey();
     }
 
@@ -86,7 +87,9 @@ public class Main {
      * Inizializza il client mongodb per scrivere i risultati delle query.
      * @return lista di collezioni su cui ogni query scrive il proprio output
      */
-    public static void initMongo() {
+    public static long initMongo() {
+        Timestamp start = getTimestamp();
+
         MongoClient mongo = new MongoClient(new MongoClientURI(Config.MONGO_URL)); //add mongo-server to /etc/hosts
         MongoDatabase db = mongo.getDatabase(Config.MONGO_DB);
         if (db.listCollectionNames().into(new ArrayList<>()).contains(Config.MONGO_Q1)) {
@@ -123,13 +126,16 @@ public class Main {
         MongoCollection collection2_SQL = db.getCollection(Config.MONGO_Q2SQL);
 
         collections = Arrays.asList(collection1,collection2,collection3,collection4, collection1_SQL, collection2_SQL);
+        Timestamp end = getTimestamp();
+        return end.getTime()-start.getTime();
     }
 
     /**
      * Inizializza Spark ritornando la spark session
      * @return
      */
-    public static void initSpark() {
+    public static long initSpark() {
+        Timestamp start = getTimestamp();
         SparkConf conf = new SparkConf().setJars(new String[]{jar_path});
         spark = SparkSession
                 .builder()
@@ -137,13 +143,16 @@ public class Main {
                 .master(spark_url)
                 .appName("SABD Proj 1")
                 .getOrCreate();
+        Timestamp end = getTimestamp();
+        return end.getTime()-start.getTime();
     }
 
     /**
      * Carica il dataset nel sistema, convertendolo da Parquet in un RDD
      * @return
      */
-    public static void loadDataset() {
+    public static long loadDataset() {
+        Timestamp start = getTimestamp();
         if (Config.DATA_MODE.equals("UNLIMITED")) {
             yellowRDD = spark.read().option("header", "false").parquet(yellow_dataset_path).toJavaRDD();
             greenRDD = spark.read().option("header", "false").parquet(green_dataset_path).toJavaRDD();
@@ -152,6 +161,8 @@ public class Main {
             yellowRDD = spark.read().option("header", "false").parquet(yellow_dataset_path).limit(Config.LIMIT_NUM).toJavaRDD();
             greenRDD = spark.read().option("header", "false").parquet(green_dataset_path).limit(Config.LIMIT_NUM).toJavaRDD();
         }
+        Timestamp end = getTimestamp();
+        return end.getTime()-start.getTime();
     }
 
     /**

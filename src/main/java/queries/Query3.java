@@ -115,7 +115,6 @@ public class Query3 extends Query{
             document.append("occurrences", occ);
 
             collection.insertOne(document);
-
         }
     }
 }

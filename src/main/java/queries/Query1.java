@@ -18,7 +18,6 @@ import utils.ValQ1;
 import utils.Tools;
 
 import java.util.List;
-//TODO Ci stanno dei dati con mesi diversi da Dicembre-Gennaio-Febbraio
 
 @SuppressWarnings("ALL")
 public class Query1 extends Query {

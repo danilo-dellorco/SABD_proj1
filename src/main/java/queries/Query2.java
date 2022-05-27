@@ -146,6 +146,5 @@ public class Query2 extends Query{
 
             collection.insertOne(document);
         }
-
     }
 }

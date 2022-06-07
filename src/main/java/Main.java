@@ -37,6 +37,8 @@ public class Main {
     //TODO vedere il caching per gli RDD riacceduti
     //TODO rimuovere i sortbykey intermedi perchè sono wide transformation. Non dovrebbero avere utilità pratiche ma li usavamo solo per i print intermedi (sopratutto query2)
     //TODO vedere i DAG delle query e togliere cose inutili
+    //TODO cambiare le get delle colonne con indice sul dataset nelle query perchè è cambiato il dataset filtrato
+
     public static void main(String[] args) {
         setExecMode();
         initSpark();
@@ -47,7 +49,6 @@ public class Main {
         Query1 q1 = new Query1(spark, yellowRDD,collections.get(0), "QUERY 1");
         Query2 q2 = new Query2(spark, yellowRDD,collections.get(1), "QUERY 2");
         Query3 q3 = new Query3(spark, yellowRDD,collections.get(2), "QUERY 3");
-        Query4 q4 = new Query4(spark, greenRDD,collections.get(3), "QUERY 4");
 
         Query1SQL q1SQL = new Query1SQL(spark, yellowRDD,collections.get(4), "QUERY 1 SQL");
         Query2SQL q2SQL = new Query2SQL(spark, yellowRDD,collections.get(5), "QUERY 2 SQL");
@@ -62,9 +63,6 @@ public class Main {
                 break;
             case ("Q3"):
                 query=q3;
-                break;
-            case ("Q4"):
-                query=q4;
                 break;
             case ("Q1SQL"):
                 query=q1SQL;
@@ -149,11 +147,11 @@ public class Main {
     public static void loadDataset() {
         if (Config.DATA_MODE.equals("UNLIMITED")) {
             yellowRDD = spark.read().option("header", "false").parquet(yellow_dataset_path).toJavaRDD();
-            greenRDD = spark.read().option("header", "false").parquet(green_dataset_path).toJavaRDD();
+            //greenRDD = spark.read().option("header", "false").parquet(green_dataset_path).toJavaRDD();
         }
         else {
             yellowRDD = spark.read().option("header", "false").parquet(yellow_dataset_path).limit(Config.LIMIT_NUM).toJavaRDD();
-            greenRDD = spark.read().option("header", "false").parquet(green_dataset_path).limit(Config.LIMIT_NUM).toJavaRDD();
+            //greenRDD = spark.read().option("header", "false").parquet(green_dataset_path).limit(Config.LIMIT_NUM).toJavaRDD();
         }
     }
 

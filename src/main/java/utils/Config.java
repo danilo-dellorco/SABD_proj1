@@ -12,8 +12,6 @@ public class Config {
     public static final String SPARK_URL = "spark://spark-master:7077";
     public static final String HDFS_URL = "hdfs://hdfs-master:54310";
 
-
-//    public static final String YELLOW_DATASET = "/filtered.parquet";
     public static final String YELLOW_DATASET = "/filtered.parquet";
     public static final String GREEN_DATASET = "/green.parquet";
 

@@ -11,6 +11,7 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import queries.Query;
+import utils.Config;
 
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
@@ -42,11 +43,10 @@ public class Query3SQL extends Query {
 
         JavaRDD<Row> rowRDD = dataset.map((Function<Row, Row>)
                 v1 ->{
-                    //tocca rimette le colonne che servono del dataset e poi modifica ste get che cambiano gli indici
-                    Timestamp ts = v1.getTimestamp(0);
+                    Timestamp ts = v1.getTimestamp(1);
                     cal.setTime(ts);
                     Timestamp ts_zone = Timestamp.valueOf(sdf.format(cal.getTime()));
-            return RowFactory.create(ts_zone, v1.getLong(1), v1.getDouble(7), v1.getDouble(3));
+            return RowFactory.create(ts_zone, v1.getLong(3), v1.getDouble(9), v1.getDouble(5));
                 });
         return spark.createDataFrame(rowRDD, schema);
     }
@@ -64,6 +64,8 @@ public class Query3SQL extends Query {
                 "FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY day ORDER BY dest_for_day DESC) AS top5 FROM values) " +
                 "WHERE top5 <= 5");
 
+        results.coalesce(1).write().mode("overwrite").option("header", "true")
+                .csv(Config.HDFS_URL+"/Q3SQL.csv");
         /**
          * Salvataggio dei risultati su mongodb
          */

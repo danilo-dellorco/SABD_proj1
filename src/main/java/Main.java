@@ -11,6 +11,7 @@ import org.apache.spark.sql.SparkSession;
 import queries.*;
 import queriesSQL.Query1SQL;
 import queriesSQL.Query2SQL;
+import queriesSQL.Query3SQL;
 import utils.Config;
 
 import java.sql.Timestamp;
@@ -50,6 +51,7 @@ public class Main {
 
         Query1SQL q1SQL = new Query1SQL(spark, yellowRDD,collections.get(4), "QUERY 1 SQL");
         Query2SQL q2SQL = new Query2SQL(spark, yellowRDD,collections.get(5), "QUERY 2 SQL");
+        Query3SQL q3SQL = new Query3SQL(spark, yellowRDD,collections.get(5), "QUERY 3 SQL");
 
         switch (args[0]) {
             case ("Q1"):
@@ -69,6 +71,9 @@ public class Main {
                 break;
             case ("Q2SQL"):
                 query=q2SQL;
+                break;
+            case ("Q3SQL"):
+                query=q3SQL;
                 break;
         }
 

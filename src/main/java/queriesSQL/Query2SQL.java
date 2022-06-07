@@ -57,6 +57,7 @@ public class Query2SQL extends Query {
     @Override
     public void execute() {
         Dataset<Row> data = createSchemaFromRDD(spark, dataset);
+        data.show();
         data.createOrReplaceTempView("trip_infos");
 
         Dataset<Row> values = spark.sql("SELECT HOUR(tpep_dropoff_datatime) AS hour_slot, AVG(tip) AS tip_avg, STDDEV_POP(tip) AS tip_stddev " +

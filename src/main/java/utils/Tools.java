@@ -5,6 +5,7 @@ import org.apache.spark.api.java.function.VoidFunction;
 import org.apache.spark.sql.Row;
 import scala.Tuple2;
 
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.text.CharacterIterator;
 import java.text.SimpleDateFormat;

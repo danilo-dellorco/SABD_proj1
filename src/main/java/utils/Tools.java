@@ -49,7 +49,7 @@ public class Tools {
         return new Tuple2<>(max._2(), maxVal);
     }
 
-    public static Integer getMonth(Timestamp timestamp) {
+    public static String getMonth(Timestamp timestamp) {
         Calendar cal = Calendar.getInstance();
         cal.setTimeZone(TimeZone.getTimeZone("UTC"));
         cal.setTime(timestamp);
@@ -58,7 +58,7 @@ public class Tools {
         sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
 
         String ts = sdf.format(cal.getTime());
-        return Integer.parseInt(ts.substring(5, 7));
+        return ts.substring(0, 7);
     }
 
     public static Integer getHour(Timestamp timestamp) {

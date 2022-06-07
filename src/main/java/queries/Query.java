@@ -7,6 +7,8 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.bson.Document;
 
+import java.util.List;
+
 public abstract class Query {
     public String name;
     public SparkSession spark;
@@ -34,4 +36,8 @@ public abstract class Query {
         }
         System.out.println("—————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————\n");
     }
+
+    public void writeResultsOnMongo() {}
+
+    public void writeResultsOnCSV() {}
 }

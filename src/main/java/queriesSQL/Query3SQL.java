@@ -11,6 +11,7 @@ import org.apache.spark.sql.api.java.UDF1;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
+import org.bson.Document;
 import queries.Query;
 import utils.Config;
 import utils.Zone;
@@ -66,11 +67,12 @@ public class Query3SQL extends Query {
                 "FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY day ORDER BY dest_for_day DESC) AS top5 FROM values) " +
                 "WHERE top5 <= 5");
         top5_per_day.createOrReplaceTempView("top5_per_day");
-        top5_per_day.show();
+        //top5_per_day.show();
 
         Dataset<Row> merged_days = spark.sql("SELECT day, COLLECT_LIST(destination) AS dest, COLLECT_LIST(passenger_avg) AS pass, COLLECT_LIST(fare_avg) AS fare, COLLECT_LIST(fare_stddev) AS stddev " +
                 "FROM top5_per_day GROUP BY day");
         merged_days.createOrReplaceTempView("merged_days");
+        //merged_days.show();
 
         // results with zone codes, also casted to string because they will later host the real string name
         Dataset<Row> view = spark.sql("SELECT day, CAST(ELEMENT_AT(dest, 1) AS String) AS D01, CAST(ELEMENT_AT(dest, 2) AS String) AS D02, CAST(ELEMENT_AT(dest, 3) AS String) AS D03, CAST(ELEMENT_AT(dest, 4) AS String) AS D04, CAST(ELEMENT_AT(dest, 5) AS String) AS D05, " +
@@ -79,8 +81,7 @@ public class Query3SQL extends Query {
                 "ELEMENT_AT(stddev, 1) AS avg_stddev_D01, ELEMENT_AT(stddev, 2) AS avg_stddev_D02, ELEMENT_AT(stddev, 3) AS avg_stddev_D03, ELEMENT_AT(stddev, 4) AS avg_stddev_D04, ELEMENT_AT(stddev, 5) AS avg_stddev_D05 " +
                 "FROM merged_days");
         view.createOrReplaceTempView("view");
-        view.show();
-        System.out.println("\n\n");
+        //view.show();
 
         // define, register and use udf function to swap zone code with zone name using java map
         spark.udf().register("setZones", (UDF1<String, String>) id -> Zone.zoneMap.get(Integer.parseInt(id)), DataTypes.StringType);
@@ -94,22 +95,33 @@ public class Query3SQL extends Query {
         /**
          * Salvataggio dei risultati su mongodb
          */
-        /*
-        List<Row> resultsList = results.collectAsList();
-        for (Row r : resultsList){
-            Integer payment = Integer.valueOf((int) r.getLong(1));      // Casting for bson documents
-            Integer counted = Integer.valueOf((int) r.getLong(2));      // Casting for bson documents
-            Document doc = new Document();
-            doc.append("hour_slot", r.getInt(0));
-            doc.append("payment_type", payment);
-            doc.append("payment_name", Payments.staticMap.get(payment));
-            doc.append("payment_occ", counted);
-            doc.append("tip_avg", r.getDouble(3));
-            doc.append("tip_stddev", r.getDouble(4));
 
+        List<Row> resultsList = results.collectAsList();
+        for (Row r : resultsList) {
+            Document doc = new Document();
+            doc.append("day", r.getDate(0));
+            doc.append("D01", r.getString(1));
+            doc.append("D02", r.getString(2));
+            doc.append("D03", r.getString(3));
+            doc.append("D04", r.getString(4));
+            doc.append("D05", r.getString(5));
+            doc.append("avg_pax_D01", r.getDouble(6));
+            doc.append("avg_pax_D02", r.getDouble(7));
+            doc.append("avg_pax_D03", r.getDouble(8));
+            doc.append("avg_pax_D04", r.getDouble(9));
+            doc.append("avg_pax_D05", r.getDouble(10));
+            doc.append("avg_fare_D01", r.getDouble(11));
+            doc.append("avg_fare_D02", r.getDouble(12));
+            doc.append("avg_fare_D03", r.getDouble(13));
+            doc.append("avg_fare_D04", r.getDouble(14));
+            doc.append("avg_fare_D05", r.getDouble(15));
+            doc.append("avg_stddev_D01", r.getDouble(16));
+            doc.append("avg_stddev_D02", r.getDouble(17));
+            doc.append("avg_stddev_D03", r.getDouble(18));
+            doc.append("avg_stddev_D04", r.getDouble(19));
+            doc.append("avg_stddev_D05", r.getDouble(20));
             collection.insertOne(doc);
         }
-         */
     }
 
     @Override

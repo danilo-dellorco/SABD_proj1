@@ -43,10 +43,10 @@ public class Query1SQL extends Query {
 
         JavaRDD<Row> rowRDD = dataset.map((Function<Row, Row>)
                 v1 -> {
-                    Timestamp ts = v1.getTimestamp(0);
+                    Timestamp ts = v1.getTimestamp(1);
                     cal.setTime(ts);
                     Timestamp ts_zone = Timestamp.valueOf(sdf.format(cal.getTime()));
-                    return RowFactory.create(ts_zone, v1.getDouble(4), v1.getDouble(5), v1.getDouble(6));
+                    return RowFactory.create(ts_zone, v1.getDouble(6), v1.getDouble(7), v1.getDouble(8));
                 });
 
         return spark.createDataFrame(rowRDD, schema);

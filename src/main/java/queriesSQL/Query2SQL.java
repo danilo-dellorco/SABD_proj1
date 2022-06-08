@@ -69,7 +69,6 @@ public class Query2SQL extends Query {
 
         Dataset<Row> mostPopularPaymentType = spark.sql("SELECT hour_slot, payment_type, counted FROM occurrences table_1 WHERE counted =" +
                 "(SELECT MAX(counted) FROM occurrences WHERE hour_slot = table_1.hour_slot) ORDER BY hour_slot ASC");
-
         mostPopularPaymentType.createOrReplaceTempView("mostPaymentType");
 
         results = spark.sql("SELECT mostPaymentType.hour_slot, payment_type, counted, tip_avg, tip_stddev " +

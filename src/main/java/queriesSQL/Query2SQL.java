@@ -9,7 +9,10 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.IntegerType;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
+import org.bson.Document;
 import queries.Query;
+import utils.Config;
+import utils.Payments;
 
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
@@ -69,30 +72,24 @@ public class Query2SQL extends Query {
     public void execute() {
         Dataset<Row> data = createSchemaFromRDD(spark, dataset);
         data.createOrReplaceTempView("trip_infos");
-        createZoneDataframe();
+//        createZoneDataframe();
 
 
         // {timestamp, zone}, trips, total_trip_per_hour, zone_perc
-        Dataset<Row> groupedTrip = spark.sql("SELECT timestamp, zone, trips, total_trip_hour, float(trips/total_trip_hour) as zone_perc FROM " +
+        Dataset<Row> scheduledTrips = spark.sql("SELECT timestamp, zone, trips, total_trip_hour, float(trips/total_trip_hour) as zone_perc FROM " +
                 "(SELECT date_format(tpep_pickup_datatime, 'y-MM-dd HH') as timestamp, pu_location_id as zone, COUNT(*) as trips, avg(tip) " +
                 "FROM trip_infos " +
                 "GROUP BY timestamp, pu_location_id)" +
                 "JOIN " +
                 "(SELECT date_format(tpep_pickup_datatime, 'y-MM-dd HH') as timestamp_2, count(*) AS total_trip_hour from trip_infos group by timestamp_2)" +
                 "ON timestamp = timestamp_2 ORDER BY timestamp ASC");
-        groupedTrip.show();
-        groupedTrip.createOrReplaceTempView("grouped_trip");
+//        scheduledTrips.show();
+        scheduledTrips.createOrReplaceTempView("scheduled_trips");
 
-        spark.sql("SELECT")
-//        spark.sql("SELECT DISTINCT timestamp, zone_id FROM grouped_trip JOIN zones_id ORDER BY timestamp, zone_id ASC").createOrReplaceTempView("allZones");
-//        spark.sql("SELECT timestamp,  zone_id FROM allZones WHERE zone_id NOT IN (SELECT zone FROM grouped_trip where allZones.timestamp = grouped_trip.timestamp)").show();
-/*
 
-        Dataset<Row> test = spark.sql("SELECT timestamp, collect_list(zone_perc) as zone_percs FROM grouped_trip GROUP BY timestamp");
-//        Dataset<Row> test = spark.sql("SELECT pu_location_id as zone, date_format(tpep_pickup_datatime, 'y-MM-dd HH') as timestamp  FROM trip_infos GROUP BY zone");
-        test.createOrReplaceTempView("test");
-//        test.show();
-
+        Dataset<Row> groupedTrips = spark.sql("SELECT timestamp, collect_list(concat_ws('=', zone, zone_perc)) as zone_percs FROM scheduled_trips GROUP BY timestamp");
+        groupedTrips.createOrReplaceTempView("grouped_trips");
+//        groupedTrips.show();
 
         // {timestamp}, trips, avg(tip), stddev(tip)
         Dataset<Row> hourly_values = spark.sql("SELECT date_format(tpep_pickup_datatime, 'y-MM-dd HH') as timestamp, COUNT(*) as trips, avg(tip) AS avg_tip, stddev_pop(tip) AS stddev_tip " +
@@ -113,12 +110,19 @@ public class Query2SQL extends Query {
         mostPopularPaymentType.createOrReplaceTempView("most_popular_payment");
 
         // {timestamp}, avg_tip, stddev_tip, most_popular_payment
-        Dataset<Row> results = spark.sql("SELECT table_1.timestamp AS timestamp, avg_tip, stddev_tip, most_popular_payment, zone_percs FROM " +
+        Dataset<Row> results = spark.sql("SELECT table_1.timestamp AS timestamp, avg_tip, stddev_tip, most_popular_payment, string(zone_percs) FROM " +
                 "(SELECT most_popular_payment.timestamp AS timestamp, avg_tip, stddev_tip, most_popular_payment FROM " +
                 "hourly_values JOIN most_popular_payment ON hourly_values.timestamp = most_popular_payment.timestamp) table_1 " +
-                "JOIN test ON table_1.timestamp = test.timestamp " +
+                "JOIN grouped_trips ON table_1.timestamp = grouped_trips.timestamp " +
                 "ORDER BY timestamp ASC");
         results.show(false);
+//        Dataset<Row> resultsMapped = results.map(row -> {
+//
+//        })
+//        results.withColumn("trips distribution", results.col("zone_percs").cast("string"));
+//        results
+        results.coalesce(1).write().mode("overwrite").option("header", "true").csv(Config.HDFS_URL+"/Q2SQL");
+
 
         /*
          * Salvataggio dei risultati su mongodb
@@ -134,10 +138,13 @@ public class Query2SQL extends Query {
             doc.append("payment_occ", counted);
             doc.append("tip_avg", r.getDouble(3));
             doc.append("tip_stddev", r.getDouble(4));
+            doc.append("tip_stddev", r.get);
 
             collection.insertOne(doc);
+
+
         }
-         */
+        */
     }
 
     @Override

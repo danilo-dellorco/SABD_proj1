@@ -1,27 +1,24 @@
 package queriesSQL;
 
-import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.RowFactory;
-import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.*;
 import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.IntegerType;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import org.bson.Document;
 import queries.Query;
-import utils.Payments;
 
-import javax.xml.crypto.Data;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.TimeZone;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class Query2SQL extends Query {
     Dataset<Row> results;
@@ -33,15 +30,15 @@ public class Query2SQL extends Query {
     public Dataset<Row> createSchemaFromRDD(SparkSession spark, JavaRDD<Row> dataset) {
         List<StructField> fields = new ArrayList<>();
 
-        fields.add(DataTypes.createStructField("tpep_dropoff_datatime", DataTypes.TimestampType, true));
-        fields.add(DataTypes.createStructField("do_location_id", DataTypes.LongType, true));
+        fields.add(DataTypes.createStructField("tpep_pickup_datatime", DataTypes.TimestampType, true));
+        fields.add(DataTypes.createStructField("pu_location_id", DataTypes.LongType, true));
         fields.add(DataTypes.createStructField("payment_type", DataTypes.LongType, true));
         fields.add(DataTypes.createStructField("tip", DataTypes.DoubleType, true));
         StructType schema = DataTypes.createStructType(fields);
 
         Calendar cal = Calendar.getInstance();
         cal.setTimeZone(TimeZone.getTimeZone("UTC"));
-        SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
 
         JavaRDD<Row> rowRDD = dataset.map((Function<Row, Row>)
@@ -49,35 +46,83 @@ public class Query2SQL extends Query {
                     Timestamp ts = v1.getTimestamp(0);
                     cal.setTime(ts);
                     Timestamp ts_zone = Timestamp.valueOf(sdf.format(cal.getTime()));
-            return RowFactory.create(ts_zone, v1.getLong(1), v1.getLong(2), v1.getDouble(4));
+            return RowFactory.create(ts_zone, v1.getLong(2), v1.getLong(4), v1.getDouble(6));
                 });
+
+
         return spark.createDataFrame(rowRDD, schema);
+    }
+
+    public void createZoneDataframe(){
+        List<Row> range_zones = new ArrayList<>();
+        for (int i = 1; i <266 ; i++) {
+            range_zones.add(RowFactory.create(i));
+        }
+
+        JavaRDD<Row> zonesRDD = JavaSparkContext.fromSparkContext(spark.sparkContext()).parallelize(range_zones);
+        StructType schema = DataTypes.createStructType(new StructField[]{DataTypes.createStructField("zone_id", DataTypes.IntegerType, false)});
+        Dataset<Row> zones = spark.createDataFrame(zonesRDD, schema);
+        zones.createOrReplaceTempView("zones_id");
     }
 
     @Override
     public void execute() {
         Dataset<Row> data = createSchemaFromRDD(spark, dataset);
         data.createOrReplaceTempView("trip_infos");
+        createZoneDataframe();
 
-        Dataset<Row> values = spark.sql("SELECT HOUR(tpep_dropoff_datatime) AS hour_slot, AVG(tip) AS tip_avg, STDDEV_POP(tip) AS tip_stddev " +
-                "FROM trip_infos GROUP BY HOUR(tpep_dropoff_datatime) ORDER BY hour(tpep_dropoff_datatime) ASC");
-        values.createOrReplaceTempView("values");
 
-        Dataset<Row> paymentOccurrences = spark.sql("SELECT HOUR(tpep_dropoff_datatime) AS hour_slot, payment_type, COUNT(*) AS counted FROM trip_infos GROUP BY HOUR(tpep_dropoff_datatime), payment_type");
-        paymentOccurrences.createOrReplaceTempView("occurrences");
+        // {timestamp, zone}, trips, total_trip_per_hour, zone_perc
+        Dataset<Row> groupedTrip = spark.sql("SELECT timestamp, zone, trips, total_trip_hour, float(trips/total_trip_hour) as zone_perc FROM " +
+                "(SELECT date_format(tpep_pickup_datatime, 'y-MM-dd HH') as timestamp, pu_location_id as zone, COUNT(*) as trips, avg(tip) " +
+                "FROM trip_infos " +
+                "GROUP BY timestamp, pu_location_id)" +
+                "JOIN " +
+                "(SELECT date_format(tpep_pickup_datatime, 'y-MM-dd HH') as timestamp_2, count(*) AS total_trip_hour from trip_infos group by timestamp_2)" +
+                "ON timestamp = timestamp_2 ORDER BY timestamp ASC");
+        groupedTrip.show();
+        groupedTrip.createOrReplaceTempView("grouped_trip");
 
-        Dataset<Row> mostPopularPaymentType = spark.sql("SELECT hour_slot, payment_type, counted FROM occurrences table_1 WHERE counted =" +
-                "(SELECT MAX(counted) FROM occurrences WHERE hour_slot = table_1.hour_slot) ORDER BY hour_slot ASC");
+        spark.sql("SELECT")
+//        spark.sql("SELECT DISTINCT timestamp, zone_id FROM grouped_trip JOIN zones_id ORDER BY timestamp, zone_id ASC").createOrReplaceTempView("allZones");
+//        spark.sql("SELECT timestamp,  zone_id FROM allZones WHERE zone_id NOT IN (SELECT zone FROM grouped_trip where allZones.timestamp = grouped_trip.timestamp)").show();
+/*
 
-        mostPopularPaymentType.createOrReplaceTempView("mostPaymentType");
+        Dataset<Row> test = spark.sql("SELECT timestamp, collect_list(zone_perc) as zone_percs FROM grouped_trip GROUP BY timestamp");
+//        Dataset<Row> test = spark.sql("SELECT pu_location_id as zone, date_format(tpep_pickup_datatime, 'y-MM-dd HH') as timestamp  FROM trip_infos GROUP BY zone");
+        test.createOrReplaceTempView("test");
+//        test.show();
 
-        results = spark.sql("SELECT mostPaymentType.hour_slot, payment_type, counted, tip_avg, tip_stddev " +
-                "FROM mostPaymentType JOIN values ON mostPaymentType.hour_slot = values.hour_slot " +
-                "ORDER BY mostPaymentType.hour_slot ASC");
 
-        /**
+        // {timestamp}, trips, avg(tip), stddev(tip)
+        Dataset<Row> hourly_values = spark.sql("SELECT date_format(tpep_pickup_datatime, 'y-MM-dd HH') as timestamp, COUNT(*) as trips, avg(tip) AS avg_tip, stddev_pop(tip) AS stddev_tip " +
+                "FROM trip_infos " +
+                "GROUP BY timestamp " +
+                "ORDER BY timestamp ASC");
+        hourly_values.createOrReplaceTempView("hourly_values");
+
+        // {timestamp}, payment_type, occurrences
+        Dataset<Row> paymentOccurrences = spark.sql("SELECT date_format(tpep_pickup_datatime, 'y-MM-dd HH') AS timestamp, payment_type, COUNT(*) AS counted " +
+                        " FROM trip_infos GROUP BY timestamp, payment_type " +
+                "ORDER BY timestamp ASC");
+        paymentOccurrences.createOrReplaceTempView("payment_occurrences");
+
+        // {timestamp}, most_popular_payment, payment_occurrences
+        Dataset<Row> mostPopularPaymentType = spark.sql("SELECT timestamp, payment_type as most_popular_payment, counted AS payment_occurrences FROM  payment_occurrences table_1 WHERE counted =" +
+                "(SELECT MAX(counted) FROM payment_occurrences WHERE timestamp = table_1.timestamp) ORDER BY timestamp ASC");
+        mostPopularPaymentType.createOrReplaceTempView("most_popular_payment");
+
+        // {timestamp}, avg_tip, stddev_tip, most_popular_payment
+        Dataset<Row> results = spark.sql("SELECT table_1.timestamp AS timestamp, avg_tip, stddev_tip, most_popular_payment, zone_percs FROM " +
+                "(SELECT most_popular_payment.timestamp AS timestamp, avg_tip, stddev_tip, most_popular_payment FROM " +
+                "hourly_values JOIN most_popular_payment ON hourly_values.timestamp = most_popular_payment.timestamp) table_1 " +
+                "JOIN test ON table_1.timestamp = test.timestamp " +
+                "ORDER BY timestamp ASC");
+        results.show(false);
+
+        /*
          * Salvataggio dei risultati su mongodb
-         */
+
         List<Row> resultsList = results.collectAsList();
         for (Row r : resultsList){
             Integer payment = Integer.valueOf((int) r.getLong(1));      // Casting for bson documents
@@ -92,6 +137,7 @@ public class Query2SQL extends Query {
 
             collection.insertOne(doc);
         }
+         */
     }
 
     @Override

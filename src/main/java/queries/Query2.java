@@ -1,8 +1,13 @@
 /**
- *     Distribution of the number of trips, average tip and its
- *     standard deviation, the most popular payment
- *     method, in 1-hour slots
+ * Per ogni ora, calcolare la distribuzione in percentuale del numero di corse rispetto alle zone di partenza
+ * (la zona di partenza è indicata da PULocationID), la mancia media e la sua deviazione standard, il
+ * metodo di pagamento più diffuso.
+ * Esempio di output:
+ * # header: YYYY-MM-DD-HH, perc PU1, perc PU2, ... perc PU265, avg tip, stddev tip, pref payment
+ * 12022-01-01-00, 0.21, 0, ..., 0.24, 18.3, 6.31, 1
  */
+
+//TODO modificato tutto per avere orario in stringa secondo il nuovo formato. Da rifare tutta ma penso servirà
 
 package queries;
 
@@ -15,9 +20,9 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.bson.Document;
 import scala.Tuple2;
-import utils.Payments;
+import utils.map.Payment;
 import utils.Tools;
-import utils.ValQ2;
+import utils.valq.ValQ2;
 
 import java.util.List;
 
@@ -31,7 +36,7 @@ public class Query2 extends Query{
     public void execute() {
 
         // RDD:=[time_slot,statistics]
-        JavaPairRDD<Integer, ValQ2> aggregated = dataset.mapToPair(r ->
+        JavaPairRDD<String, ValQ2> aggregated = dataset.mapToPair(r ->
                     new Tuple2<>(Tools.getHour(r.getTimestamp(0)),
                     new ValQ2(r.getDouble(4), r.getLong(2),1)));
 
@@ -41,7 +46,7 @@ public class Query2 extends Query{
          */
 
         // RDD:=[(time_slot,payment),1]
-        JavaPairRDD<Tuple2<Integer, Long>,Integer> aggr_pay = aggregated.mapToPair(r ->
+        JavaPairRDD<Tuple2<String, Long>,Integer> aggr_pay = aggregated.mapToPair(r ->
                 new Tuple2<>(
                         new Tuple2 <>(
                                 r._1(),
@@ -49,26 +54,26 @@ public class Query2 extends Query{
                 ,1));
 
         // RDD:=[(time_slot,payment),occurrences]
-        JavaPairRDD<Tuple2<Integer, Long>,Integer> red_pay = aggr_pay.reduceByKey((Function2<Integer, Integer, Integer>) (v1, v2) -> {
+        JavaPairRDD<Tuple2<String, Long>,Integer> red_pay = aggr_pay.reduceByKey((Function2<Integer, Integer, Integer>) (v1, v2) -> {
             Integer occ = v1+ v2;
             return occ;
         });
 
         // RDD:=[time_slot,{((time_slot,payment),occurrences)...}]
-        JavaPairRDD<Integer, Iterable<Tuple2<Tuple2<Integer, Long>, Integer>>> grouped = red_pay.groupBy((Function<Tuple2<Tuple2<Integer, Long>, Integer>, Integer>) r -> r._1()._1());
+        JavaPairRDD<String, Iterable<Tuple2<Tuple2<String, Long>, Integer>>> grouped = red_pay.groupBy((Function<Tuple2<Tuple2<String, Long>, Integer>, String>) r -> r._1()._1());
 
         // RDD:=[time_slot,(top_payment,occurrences)]
-        JavaPairRDD<Integer,Tuple2<Long,Integer>> top_payments = grouped.mapToPair(r ->
+        JavaPairRDD<String,Tuple2<Long,Integer>> top_payments = grouped.mapToPair(r ->
                 new Tuple2<>(
                         r._1(),
-                        getMostFrequentFromIterable(r._2())
+                        getMostFrequentPayment(r._2())
                 ));
 
         /**
          * Calcolo della media e deviazione standard di 'tips' per ogni fascia oraria
          */
         // RDD:=[time_slot,statistics_occurrences]
-        JavaPairRDD<Integer, ValQ2> reduced = aggregated.reduceByKey((Function2<ValQ2, ValQ2, ValQ2>) (v1, v2) -> {
+        JavaPairRDD<String, ValQ2> reduced = aggregated.reduceByKey((Function2<ValQ2, ValQ2, ValQ2>) (v1, v2) -> {
             Double tips = v1.getTips() + v2.getTips();
             Integer occ = v1.getOccurrences() + v2.getOccurrences();
             ValQ2 v = new ValQ2(tips, occ);
@@ -76,7 +81,7 @@ public class Query2 extends Query{
         });
 
         // RDD:=[time_slot,statistics_mean]
-        JavaPairRDD<Integer, ValQ2> statistics = reduced.mapToPair(
+        JavaPairRDD<String, ValQ2> statistics = reduced.mapToPair(
                 r -> {
                     Integer num_occurrences = r._2().getOccurrences();
                     Double tips_mean = r._2().getTips() / num_occurrences;
@@ -85,10 +90,10 @@ public class Query2 extends Query{
                             new ValQ2(tips_mean, num_occurrences));
                 });
 
-        JavaPairRDD<Integer, Tuple2<ValQ2, ValQ2>> joined = aggregated.join(statistics);
+        JavaPairRDD<String, Tuple2<ValQ2, ValQ2>> joined = aggregated.join(statistics);
 
         // RDD:=[time_slot,statistics_deviation_it]
-        JavaPairRDD<Integer, ValQ2> iterations = joined.mapToPair(
+        JavaPairRDD<String, ValQ2> iterations = joined.mapToPair(
                 r -> {
                     Double tips_mean = r._2()._2().getTips();
                     Double tip_val = r._2()._1().getTips();
@@ -99,14 +104,14 @@ public class Query2 extends Query{
                 });
 
         // RDD:=[time_slot,statistics_deviation_sum]
-        JavaPairRDD<Integer, ValQ2> stddev_aggr = iterations.reduceByKey((Function2<ValQ2, ValQ2, ValQ2>) (v1, v2) -> {
+        JavaPairRDD<String, ValQ2> stddev_aggr = iterations.reduceByKey((Function2<ValQ2, ValQ2, ValQ2>) (v1, v2) -> {
             Double tips_total_stddev = v1.getTips_stddev() + v2.getTips_stddev();
             ValQ2 v = new ValQ2(v1.getTips(), v1.getOccurrences(), v1.getPayment_type(), tips_total_stddev);
             return v;
         });
 
         // RDD:=[time_slot,statistics_deviation]
-        JavaPairRDD<Integer, ValQ2> deviation = stddev_aggr.mapToPair(
+        JavaPairRDD<String, ValQ2> deviation = stddev_aggr.mapToPair(
                 r -> {
                     Double tips_mean = r._2().getTips();
                     Integer n = r._2().getOccurrences();
@@ -119,21 +124,21 @@ public class Query2 extends Query{
          * Unione dei metodi di pagamento con le statistiche calcolate
          */
         // RDD:=[time_slot,(statistics,(top_payment,occurrences)))]
-        JavaPairRDD<Integer, Tuple2<ValQ2, Tuple2<Long, Integer>>> final_joined = deviation
+        JavaPairRDD<String, Tuple2<ValQ2, Tuple2<Long, Integer>>> final_joined = deviation
                 .join(top_payments)
                 .sortByKey();
 
-        List<Tuple2<Integer, Tuple2<ValQ2, Tuple2<Long, Integer>>>> result = final_joined.collect();
+        List<Tuple2<String, Tuple2<ValQ2, Tuple2<Long, Integer>>>> result = final_joined.collect();
 
         /**
          * Salvataggio dei risultati su mongodb
          */
-        for (Tuple2<Integer, Tuple2<ValQ2, Tuple2<Long, Integer>>> r:result) {
-            Integer slot = r._1();
+        for (Tuple2<String, Tuple2<ValQ2, Tuple2<Long, Integer>>> r:result) {
+            String slot = r._1();
             Double mean = r._2()._1().getTips();
             Double stdev = r._2()._1().getTips_stddev();
             Integer payment_id = Math.toIntExact(r._2()._2()._1());
-            String payment_name = Payments.staticMap.get(payment_id);
+            String payment_name = Payment.staticMap.get(payment_id);
             Integer payment_occ = r._2()._2()._2();
 
             Document document = new Document();

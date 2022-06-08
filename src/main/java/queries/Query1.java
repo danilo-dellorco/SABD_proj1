@@ -1,6 +1,13 @@
 /**
- * Average calculation on a monthly basis and on a
- * subset of values tip/(total amount - toll amount)
+ * Per ogni mese solare, calcolare la percentuale media dell’importo della mancia rispetto al costo della
+ * corsa esclusi i pedaggi. Calcolare il costo della corsa come differenza tra l’importo totale (Total amount)
+ * e l’importo dei pedaggi (Tolls amount) ed includere soltanto i pagamenti effettuati con carta di
+ * credito. Nell’output indicare anche il numero totale di corse usate per calcolare il valore medio. N.B.:
+ * i valori indicati negli esempi di output sono solo a titolo di esempio.
+ *
+ * Esempio di output:
+ * # header: YYYY-MM, tip percentage, trips number
+ * 2021-12, 0.16, 1607185
  */
 
 package queries;
@@ -14,7 +21,7 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.bson.Document;
 import scala.Tuple2;
-import utils.ValQ1;
+import utils.valq.ValQ1;
 import utils.Tools;
 
 import java.io.FileWriter;
@@ -89,10 +96,11 @@ public class Query1 extends Query {
         }
     }
 
-    // TODO finire e testare
+
     @Override
     public void writeResultsOnCSV() {
-        String outputName = "q1-res.csv";
+//        String outputName = Config.HDFS_URL+"/"+"q1-res.csv";
+        String outputName = "Results/query1.csv";
 
         try (FileWriter fileWriter = new FileWriter(outputName)) {
             StringBuilder outputBuilder = new StringBuilder("YYYY-MM;tip percentage;trips number\n");
@@ -107,7 +115,5 @@ public class Query1 extends Query {
         } catch (Exception e) {
             System.out.println("Results CSV Error: " + e.toString());
         }
-
-
     }
 }

@@ -16,6 +16,7 @@ import utils.Tools;
 
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -39,6 +40,8 @@ public class Main {
     //TODO rimuovere i sortbykey intermedi perchè sono wide transformation. Non dovrebbero avere utilità pratiche ma li usavamo solo per i print intermedi (sopratutto query2)
     //TODO vedere i DAG delle query e togliere cose inutili
     public static void main(String[] args) throws IOException, InterruptedException {
+        String s = "2003-01-05";
+        System.out.println(s.compareTo("2022-02-09"));
         setExecMode();
         long sparkTime = initSpark();
         long dataTime = loadDataset();
@@ -102,7 +105,7 @@ public class Main {
             db.getCollection(Config.MONGO_Q3).drop();
         }
         if (db.listCollectionNames().into(new ArrayList<>()).contains(Config.MONGO_Q4)) {
-            db.getCollection(Config.MONGO_Q4).drop();
+               db.getCollection(Config.MONGO_Q4).drop();
         }
         if (db.listCollectionNames().into(new ArrayList<>()).contains(Config.MONGO_Q1SQL)) {
             db.getCollection(Config.MONGO_Q1SQL).drop();

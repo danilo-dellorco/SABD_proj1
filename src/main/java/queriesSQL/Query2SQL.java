@@ -1,6 +1,5 @@
 package queriesSQL;
 
-import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
@@ -13,9 +12,8 @@ import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.bson.Document;
 import queries.Query;
-import utils.Payments;
+import utils.map.Payment;
 
-import javax.xml.crypto.Data;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -85,7 +83,7 @@ public class Query2SQL extends Query {
             Document doc = new Document();
             doc.append("hour_slot", r.getInt(0));
             doc.append("payment_type", payment);
-            doc.append("payment_name", Payments.staticMap.get(payment));
+            doc.append("payment_name", Payment.staticMap.get(payment));
             doc.append("payment_occ", counted);
             doc.append("tip_avg", r.getDouble(3));
             doc.append("tip_stddev", r.getDouble(4));

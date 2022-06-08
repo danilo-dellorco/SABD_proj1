@@ -1,18 +1,14 @@
 package utils;
 
 import scala.Tuple2;
+import utils.valq.ValQ3;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.sql.Timestamp;
 import java.text.CharacterIterator;
 import java.text.SimpleDateFormat;
 import java.text.StringCharacterIterator;
-import java.util.Calendar;
-import java.util.Iterator;
-import java.util.Scanner;
-import java.util.TimeZone;
+import java.util.*;
 
 public class Tools {
     /**
@@ -31,15 +27,15 @@ public class Tools {
      * @param list
      * @return
      */
-    public static Tuple2<Long, Integer> getMostFrequentFromIterable(Iterable<Tuple2<Tuple2<Integer, Long>, Integer>> list) {
-        Iterator<Tuple2<Tuple2<Integer, Long>, Integer>> iterator = list.iterator();
+    public static Tuple2<Long, Integer> getMostFrequentPayment(Iterable<Tuple2<Tuple2<String, Long>, Integer>> list) {
+        Iterator<Tuple2<Tuple2<String, Long>, Integer>> iterator = list.iterator();
 
-        Tuple2<Integer, Long> max = null;
+        Tuple2<String, Long> max = null;
         Integer maxVal = 0;
 
         while (iterator.hasNext()) {
-            Tuple2<Tuple2<Integer, Long>, Integer> element = iterator.next();
-            Tuple2<Integer, Long> actual = element._1();
+            Tuple2<Tuple2<String, Long>, Integer> element = iterator.next();
+            Tuple2<String, Long> actual = element._1();
             Integer actualVal = element._2();
             if (actualVal >= maxVal) {
                 maxVal = actualVal;
@@ -49,27 +45,66 @@ public class Tools {
         return new Tuple2<>(max._2(), maxVal);
     }
 
+    public static List<Tuple2<Long, ValQ3>> getTopFiveDestinations(Iterable<Tuple2<Tuple2<String, Long>, ValQ3>> list) {
+
+        List<Tuple2<Long,ValQ3>> top = new ArrayList<>();
+        List<Long> topId = new ArrayList<>();
+        int n = 0;
+
+        while (n!=5) {
+            Iterator<Tuple2<Tuple2<String, Long>, ValQ3>> iterator = list.iterator();
+            Tuple2<Long, ValQ3> max = null;
+            Integer maxVal = 0;
+            Long maxId = 0L;
+
+            // [(Mese,Destinazione), statistiche]
+            while (iterator.hasNext()) {
+                Tuple2<Tuple2<String, Long>, ValQ3> element = iterator.next();
+
+                Tuple2<Long, ValQ3> actual = new Tuple2<>(element._1()._2(),element._2());
+                Integer actualVal = actual._2().getOccurrences();
+                Long actualId = actual._1();
+                if (actualVal >= maxVal && !topId.contains(actualId)) {
+                    maxVal = actualVal;
+                    max = actual;
+                    maxId = actualId;
+                }
+            }
+            n++;
+            topId.add(maxId);
+            top.add(max);
+        }
+        return top;
+    }
+
     public static String getMonth(Timestamp timestamp) {
         Calendar cal = Calendar.getInstance();
         cal.setTimeZone(TimeZone.getTimeZone("UTC"));
         cal.setTime(timestamp);
 
-        SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM");
         sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-
-        String ts = sdf.format(cal.getTime());
-        return ts.substring(0, 7);
+        return sdf.format(cal.getTime());
     }
 
-    public static Integer getHour(Timestamp timestamp) {
+    public static String getDay(Timestamp timestamp) {
         Calendar cal = Calendar.getInstance();
         cal.setTimeZone(TimeZone.getTimeZone("UTC"));
         cal.setTime(timestamp);
-        SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss");
-        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
 
-        String ts = sdf.format(cal.getTime());
-        return Integer.parseInt(ts.substring(11, 13));
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+        return sdf.format(cal.getTime());
+    }
+
+    public static String getHour(Timestamp timestamp) {
+        Calendar cal = Calendar.getInstance();
+        cal.setTimeZone(TimeZone.getTimeZone("UTC"));
+        cal.setTime(timestamp);
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd-HH");
+        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+        return sdf.format(cal.getTime());
     }
 
     public static Timestamp getTimestamp() {

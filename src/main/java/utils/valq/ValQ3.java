@@ -1,4 +1,4 @@
-package utils;
+package utils.valq;
 
 import java.io.Serializable;
 
@@ -61,7 +61,8 @@ public class ValQ3 implements Serializable {
     }
 
     @Override
-    public String toString() {
+    public String
+    toString() {
         return "ValQ3{" +
                 "passengers=" + passengers +
                 ", fare=" + fare +

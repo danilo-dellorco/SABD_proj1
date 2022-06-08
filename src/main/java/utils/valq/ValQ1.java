@@ -1,4 +1,4 @@
-package utils;
+package utils.valq;
 
 import java.io.Serializable;
 

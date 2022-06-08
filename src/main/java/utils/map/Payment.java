@@ -1,9 +1,9 @@
-package utils;
+package utils.map;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class Payments {
+public class Payment {
     public static final Map<Integer, String> staticMap = new HashMap<>();
 
     static {

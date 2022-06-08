@@ -45,10 +45,10 @@ public class Query1SQL extends Query {
 
         JavaRDD<Row> rowRDD = dataset.map((Function<Row, Row>)
                 v1 -> {
-                    Timestamp ts = v1.getTimestamp(0);
+                    Timestamp ts = v1.getTimestamp(1);
                     cal.setTime(ts);
                     Timestamp ts_zone = Timestamp.valueOf(sdf.format(cal.getTime()));
-                    return RowFactory.create(ts_zone, v1.getDouble(4), v1.getDouble(5), v1.getDouble(6), v1.getLong(2));
+                    return RowFactory.create(ts_zone, v1.getDouble(6), v1.getDouble(7), v1.getDouble(8), v1.getLong(4));
                 });
 
         return spark.createDataFrame(rowRDD, schema);
@@ -59,6 +59,8 @@ public class Query1SQL extends Query {
         Dataset<Row> data = createSchemaFromRDD(spark, dataset);
         data.createOrReplaceTempView("taxi_row");
 
+        spark.sql("SELECT tpep_dropoff_datatime FROM taxi_row ORDER BY tpep_dropoff_datatime ASC ").show();
+        /*
         Dataset<Row> values = spark.sql("SELECT date_format(tpep_dropoff_datatime, 'y/MM') AS date, " +
                 "sum(tip_amount) AS tips, sum(tolls_amount) AS tolls, sum(total_amount) AS total, " +
                 "count(*) AS trips_number " +
@@ -70,19 +72,21 @@ public class Query1SQL extends Query {
                 " (tips/(total-tolls)) AS tips_percentage, trips_number FROM taxi_values ORDER BY date ASC");       //date_format(to_timestamp(string(month), 'M'), 'MMMM')  per convertire il mese in nome stringa
 
 
-        results.coalesce(1).write().mode("overwrite").option("header", "true").csv(Config.HDFS_URL+"/Q1SQL.csv");
+        results.coalesce(1).write().mode("overwrite").option("header", "true").csv(Config.HDFS_URL+"/Q1SQL  ");
         /**
          * Salvataggio dei risultati su mongodb
-         */
+
         List<Row> resultsList = results.collectAsList();
         for (Row r : resultsList){
             Document doc = new Document();
             doc.append("month_id", r.getString(0));
-            doc.append("tips_percentage", Double.valueOf((int) r.getDouble(1)));        // da problemi il valore NULL, dopo che puliamo con nifi sta apposto
+            doc.append("tips_percentage", Double.valueOf((int) r.getDouble(1)));
             doc.append("trips_number", r.getLong(2));
 
             collection.insertOne(doc);
         }
+
+         */
     }
 
     @Override

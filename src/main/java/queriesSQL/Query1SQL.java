@@ -40,13 +40,14 @@ public class Query1SQL extends Query {
 
         Calendar cal = Calendar.getInstance();
         cal.setTimeZone(TimeZone.getTimeZone("UTC"));
-        SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd hh:mm:ss");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
         sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
 
         JavaRDD<Row> rowRDD = dataset.map((Function<Row, Row>)
                 v1 -> {
                     Timestamp ts = v1.getTimestamp(1);
                     cal.setTime(ts);
+
                     Timestamp ts_zone = Timestamp.valueOf(sdf.format(cal.getTime()));
                     return RowFactory.create(ts_zone, v1.getDouble(6), v1.getDouble(7), v1.getDouble(8), v1.getLong(4));
                 });
@@ -59,8 +60,6 @@ public class Query1SQL extends Query {
         Dataset<Row> data = createSchemaFromRDD(spark, dataset);
         data.createOrReplaceTempView("taxi_row");
 
-        spark.sql("SELECT tpep_dropoff_datatime FROM taxi_row ORDER BY tpep_dropoff_datatime ASC ").show();
-        /*
         Dataset<Row> values = spark.sql("SELECT date_format(tpep_dropoff_datatime, 'y/MM') AS date, " +
                 "sum(tip_amount) AS tips, sum(tolls_amount) AS tolls, sum(total_amount) AS total, " +
                 "count(*) AS trips_number " +
@@ -75,7 +74,7 @@ public class Query1SQL extends Query {
         results.coalesce(1).write().mode("overwrite").option("header", "true").csv(Config.HDFS_URL+"/Q1SQL  ");
         /**
          * Salvataggio dei risultati su mongodb
-
+         */
         List<Row> resultsList = results.collectAsList();
         for (Row r : resultsList){
             Document doc = new Document();
@@ -86,7 +85,6 @@ public class Query1SQL extends Query {
             collection.insertOne(doc);
         }
 
-         */
     }
 
     @Override

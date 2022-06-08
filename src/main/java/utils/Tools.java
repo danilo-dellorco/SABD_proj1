@@ -54,7 +54,7 @@ public class Tools {
         cal.setTimeZone(TimeZone.getTimeZone("UTC"));
         cal.setTime(timestamp);
 
-        SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
 
         String ts = sdf.format(cal.getTime());
@@ -65,7 +65,7 @@ public class Tools {
         Calendar cal = Calendar.getInstance();
         cal.setTimeZone(TimeZone.getTimeZone("UTC"));
         cal.setTime(timestamp);
-        SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
 
         String ts = sdf.format(cal.getTime());

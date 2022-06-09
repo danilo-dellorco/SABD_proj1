@@ -21,5 +21,7 @@ public class Query4 extends Query{
 
 
     @Override
-    public void execute() {}
+    public long execute() {
+        return 0;
+    }
 }

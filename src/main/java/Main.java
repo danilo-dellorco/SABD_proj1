@@ -16,6 +16,7 @@ import utils.Tools;
 
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -34,15 +35,15 @@ public class Main {
     public static String green_dataset_path;
     public static String spark_url;
 
-
-    //TODO vedere il caching per gli RDD riacceduti
-    //TODO rimuovere i sortbykey intermedi perchè sono wide transformation. Non dovrebbero avere utilità pratiche ma li usavamo solo per i print intermedi (sopratutto query2)
-    //TODO vedere i DAG delle query e togliere cose inutili
+    // TODO mettere nella relazione la pulizia del dataset insomma righe e colonne tolte e perché.
+    // TODO vedere il caching per gli RDD riacceduti
+    // TODO rimuovere i sortbykey intermedi perchè sono wide transformation. Non dovrebbero avere utilità pratiche ma li usavamo solo per i print intermedi (sopratutto query2)
+    // TODO vedere i DAG delle query e togliere cose inutili
     public static void main(String[] args) throws IOException, InterruptedException {
         setExecMode();
-        long sparkTime = initSpark();
-        long dataTime = loadDataset();
-        long mongoTime = initMongo();
+        long sparkSetupTime = initSpark();
+        long dataLoadTime = loadDataset();
+        long mongoSetupTime = initMongo();
         turnOffLogger();
 
         Query1 q1 = new Query1(spark, yellowRDD,collections.get(0), "QUERY 1");
@@ -73,14 +74,12 @@ public class Main {
                 query=q2SQL;
                 break;
         }
-        Timestamp start = getTimestamp();
-        query.execute();
-        Timestamp end = getTimestamp();
-        long queryTime = end.getTime() - start.getTime();
+        long queryExecTime = query.execute();
+        long mongoSaveTime = query.writeResultsOnMongo();
+        long csvSaveTime = query.writeResultsOnCSV();
 
 //        query.printResults();
-        query.writeResultsOnCSV();
-        printResultAnalysis(query.getName(),sparkTime, dataTime, mongoTime, queryTime);
+        printResultAnalysis(query.getName(),sparkSetupTime, dataLoadTime, mongoSetupTime, queryExecTime,mongoSaveTime,csvSaveTime);
         promptEnterKey();
     }
 
@@ -103,7 +102,7 @@ public class Main {
             db.getCollection(Config.MONGO_Q3).drop();
         }
         if (db.listCollectionNames().into(new ArrayList<>()).contains(Config.MONGO_Q4)) {
-            db.getCollection(Config.MONGO_Q4).drop();
+               db.getCollection(Config.MONGO_Q4).drop();
         }
         if (db.listCollectionNames().into(new ArrayList<>()).contains(Config.MONGO_Q1SQL)) {
             db.getCollection(Config.MONGO_Q1SQL).drop();

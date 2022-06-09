@@ -68,7 +68,7 @@ public class Query2SQL extends Query {
     }
 
     @Override
-    public void execute() {
+    public long execute() {
         Dataset<Row> data = createSchemaFromRDD(spark, dataset);
         data.createOrReplaceTempView("trip_infos");
 //        createZoneDataframe();
@@ -125,7 +125,7 @@ public class Query2SQL extends Query {
             Document doc = new Document();
             doc.append("hour_slot", r.getInt(0));
             doc.append("payment_type", payment);
-            doc.append("payment_name", Payments.staticMap.get(payment));
+            doc.append("payment_name", Payment.staticMap.get(payment));
             doc.append("payment_occ", counted);
             doc.append("tip_avg", r.getDouble(3));
             doc.append("tip_stddev", r.getDouble(4));
@@ -136,6 +136,7 @@ public class Query2SQL extends Query {
 
         }
         */
+        return 0;
     }
 
     @Override

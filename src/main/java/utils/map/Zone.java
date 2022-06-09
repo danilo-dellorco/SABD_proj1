@@ -1,4 +1,4 @@
-package utils;
+package utils.map;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -273,5 +273,4 @@ public class Zone {
         zoneMap.put(264,"Unknown,NV,N/A");
         zoneMap.put(265,"Unknown,NA,N/A");
     }
-
 }

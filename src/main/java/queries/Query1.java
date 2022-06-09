@@ -21,7 +21,7 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.bson.Document;
 import scala.Tuple2;
-import utils.valq.ValQ1;
+import utils.tuples.ValQ1;
 import utils.Tools;
 
 import java.io.FileWriter;
@@ -41,6 +41,7 @@ public class Query1 extends Query {
     @Override
     public long execute() {
         // RDD:=[month,values]
+        Timestamp start = getTimestamp();
         JavaPairRDD<String, ValQ1> taxiRows = dataset.mapToPair(
                 r -> {
                     String month = Tools.getMonth(r.getTimestamp(0));
@@ -78,9 +79,8 @@ public class Query1 extends Query {
                 }
         ).sortByKey().collect();
 
-        writeResultsOnMongo();
-        writeResultsOnCSV();
-        return 0;
+        Timestamp end = getTimestamp();
+        return end.getTime() - start.getTime();
     }
 
     @Override

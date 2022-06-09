@@ -6,21 +6,15 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.types.DataTypes;
-import org.apache.spark.sql.types.IntegerType;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import org.bson.Document;
 import queries.Query;
-import scala.Predef;
 import utils.Config;
-import utils.Payments;
 
 import java.io.FileWriter;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 public class Query2SQL extends Query {
     Dataset<Row> results;
@@ -147,7 +141,7 @@ public class Query2SQL extends Query {
     }
 
     @Override
-    public void writeResultsOnCSV() {
+    public long writeResultsOnCSV() {
         String outputName = "Results/q2sql-res.csv";
 
         try (FileWriter fileWriter = new FileWriter(outputName)) {
@@ -183,8 +177,7 @@ public class Query2SQL extends Query {
         } catch (Exception e) {
             System.out.println("Results CSV Error: " + e.toString());
         }
-
-
+        return 0;
     }
 }
 

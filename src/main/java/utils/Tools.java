@@ -1,9 +1,9 @@
 package utils;
 
 import scala.Tuple2;
-import utils.valq.ValQ3;
+import utils.tuples.KeyQ3;
+import utils.tuples.ValQ3;
 
-import java.io.IOException;
 import java.sql.Timestamp;
 import java.text.CharacterIterator;
 import java.text.SimpleDateFormat;

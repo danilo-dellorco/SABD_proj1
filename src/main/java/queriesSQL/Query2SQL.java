@@ -87,7 +87,7 @@ public class Query2SQL extends Query {
         scheduledTrips.createOrReplaceTempView("scheduled_trips");
 
 
-        Dataset<Row> groupedTrips = spark.sql("SELECT timestamp, collect_list(concat_ws('=', zone, zone_perc)) as zone_percs FROM scheduled_trips GROUP BY timestamp");
+        Dataset<Row> groupedTrips = spark.sql("SELECT timestamp, collect_list(concat_ws(':', zone, zone_perc)) as zone_percs FROM scheduled_trips GROUP BY timestamp");
         groupedTrips.createOrReplaceTempView("grouped_trips");
 //        groupedTrips.show();
 
@@ -110,7 +110,7 @@ public class Query2SQL extends Query {
         mostPopularPaymentType.createOrReplaceTempView("most_popular_payment");
 
         // {timestamp}, avg_tip, stddev_tip, most_popular_payment
-        Dataset<Row> results = spark.sql("SELECT table_1.timestamp AS timestamp, avg_tip, stddev_tip, most_popular_payment, string(zone_percs) FROM " +
+        Dataset<Row> results = spark.sql("SELECT table_1.timestamp AS timestamp, avg_tip, stddev_tip, most_popular_payment, string(zone_percs) AS trips_distribution FROM " +
                 "(SELECT most_popular_payment.timestamp AS timestamp, avg_tip, stddev_tip, most_popular_payment FROM " +
                 "hourly_values JOIN most_popular_payment ON hourly_values.timestamp = most_popular_payment.timestamp) table_1 " +
                 "JOIN grouped_trips ON table_1.timestamp = grouped_trips.timestamp " +

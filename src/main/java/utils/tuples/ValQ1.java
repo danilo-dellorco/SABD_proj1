@@ -1,4 +1,4 @@
-package utils.valq;
+package utils.tuples;
 
 import java.io.Serializable;
 

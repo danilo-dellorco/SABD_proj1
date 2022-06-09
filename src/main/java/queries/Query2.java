@@ -20,9 +20,9 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.bson.Document;
 import scala.Tuple2;
-import utils.map.Payment;
+import utils.maps.Payment;
 import utils.Tools;
-import utils.valq.ValQ2;
+import utils.tuples.ValQ2;
 
 import java.util.List;
 

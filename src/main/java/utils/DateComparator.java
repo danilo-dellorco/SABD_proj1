@@ -1,10 +1,11 @@
 package utils;
 
+import java.io.Serializable;
 import java.util.Comparator;
 
-public class DateComparator  implements Comparator<String> {
+public class DateComparator  implements Comparator<String>, Serializable {
     public int compare(String obj1, String obj2) {
-        if (obj1 == obj2) {
+        if (obj1.equals(obj2)) {
             return 0;
         }
         if (obj1 == null) {
@@ -13,6 +14,8 @@ public class DateComparator  implements Comparator<String> {
         if (obj2 == null) {
             return 1;
         }
-        return obj1.compareTo(obj2);
+        int cmp = obj1.compareTo(obj2);
+        System.out.printf("%s :: %s -> %d\n",obj1,obj2,cmp);
+        return cmp;
     }
 }

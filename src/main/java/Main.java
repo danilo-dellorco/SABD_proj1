@@ -40,8 +40,6 @@ public class Main {
     //TODO rimuovere i sortbykey intermedi perchè sono wide transformation. Non dovrebbero avere utilità pratiche ma li usavamo solo per i print intermedi (sopratutto query2)
     //TODO vedere i DAG delle query e togliere cose inutili
     public static void main(String[] args) throws IOException, InterruptedException {
-        String s = "2003-01-05";
-        System.out.println(s.compareTo("2022-02-09"));
         setExecMode();
         long sparkTime = initSpark();
         long dataTime = loadDataset();

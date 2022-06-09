@@ -82,34 +82,19 @@ public class Query3 extends Query{
                         getTopFiveDestinations(r._2())
                 ));
 
-        top_destinations
-                .sortByKey(Comparator.<String>naturalOrder())
-                .foreach((VoidFunction<Tuple2<String, List<Tuple2<Long, ValQ3>>>>) r-> System.out.println(r));
-//        top_destinations.foreach((VoidFunction<Tuple2<String, List<Tuple2<Long, ValQ3>>>>) r-> System.out.println(r));
+        // RDD:=[location_id,statistics_stdev_iteration]
+        JavaPairRDD<Tuple2<String,Long>, Tuple2<ValQ3, ValQ3>> joined = days.join(mean);
+        System.out.println(joined.take(1));
 
+        JavaPairRDD<Tuple2<String,Long>, ValQ3> iterations = joined.mapToPair(
+                r -> {
+                    Double fare_mean = r._2()._2().getFare();
+                    Double fare_val = r._2()._1().getFare();
+                    Double fare_dev = Math.pow((fare_val - fare_mean), 2);
+                    r._2()._2().setFare_stddev(fare_dev);
 
-//        // RDD:=[location_id,statistics_mean]
-//        JavaPairRDD<Long, ValQ3> statistics = reduced.mapToPair(
-//                r -> {
-//                    Integer num_occurrences = r._2().getOccurrences();
-//                    Double pass_mean = r._2().getPassengers() / num_occurrences;
-//                    Double fare_mean = r._2().getFare() / num_occurrences;
-//
-//                    return new Tuple2<>(r._1(),
-//                            new ValQ3(pass_mean, fare_mean, num_occurrences));
-//                });
-//
-//        // RDD:=[location_id,statistics_stdev_iteration]
-//        JavaPairRDD<Long, Tuple2<ValQ3, ValQ3>> joined = days.join(statistics);
-//        JavaPairRDD<Long, ValQ3> iterations = joined.mapToPair(
-//                r -> {
-//                    Double fare_mean = r._2()._2().getFare();
-//                    Double fare_val = r._2()._1().getFare();
-//                    Double fare_dev = Math.pow((fare_val - fare_mean), 2);
-//                    r._2()._2().setFare_stddev(fare_dev);
-//
-//                    return new Tuple2<>(r._1(), r._2()._2());
-//                });
+                    return new Tuple2<>(r._1(), r._2()._2());
+                });
 //
 //        // RDD:=[location_id,statistics_stdev_aggregated]
 //        JavaPairRDD<Long, ValQ3> stddev_aggr = iterations.reduceByKey((Function2<ValQ3, ValQ3, ValQ3>) (v1, v2) -> {

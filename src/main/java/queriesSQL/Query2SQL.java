@@ -11,15 +11,14 @@ import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.bson.Document;
 import queries.Query;
+import scala.Predef;
 import utils.Config;
 import utils.Payments;
 
+import java.io.FileWriter;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
-import java.util.TimeZone;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -83,13 +82,12 @@ public class Query2SQL extends Query {
                 "JOIN " +
                 "(SELECT date_format(tpep_pickup_datatime, 'y-MM-dd HH') as timestamp_2, count(*) AS total_trip_hour from trip_infos group by timestamp_2)" +
                 "ON timestamp = timestamp_2 ORDER BY timestamp ASC");
-//        scheduledTrips.show();
+        scheduledTrips.show();
         scheduledTrips.createOrReplaceTempView("scheduled_trips");
 
 
         Dataset<Row> groupedTrips = spark.sql("SELECT timestamp, collect_list(concat_ws(':', zone, zone_perc)) as zone_percs FROM scheduled_trips GROUP BY timestamp");
         groupedTrips.createOrReplaceTempView("grouped_trips");
-//        groupedTrips.show();
 
         // {timestamp}, trips, avg(tip), stddev(tip)
         Dataset<Row> hourly_values = spark.sql("SELECT date_format(tpep_pickup_datatime, 'y-MM-dd HH') as timestamp, COUNT(*) as trips, avg(tip) AS avg_tip, stddev_pop(tip) AS stddev_tip " +
@@ -110,19 +108,12 @@ public class Query2SQL extends Query {
         mostPopularPaymentType.createOrReplaceTempView("most_popular_payment");
 
         // {timestamp}, avg_tip, stddev_tip, most_popular_payment
-        Dataset<Row> results = spark.sql("SELECT table_1.timestamp AS timestamp, avg_tip, stddev_tip, most_popular_payment, string(zone_percs) AS trips_distribution FROM " +
+        results = spark.sql("SELECT table_1.timestamp AS timestamp, avg_tip, stddev_tip, most_popular_payment, string(zone_percs) AS trips_distribution, zone_percs AS percs_array FROM " +
                 "(SELECT most_popular_payment.timestamp AS timestamp, avg_tip, stddev_tip, most_popular_payment FROM " +
                 "hourly_values JOIN most_popular_payment ON hourly_values.timestamp = most_popular_payment.timestamp) table_1 " +
                 "JOIN grouped_trips ON table_1.timestamp = grouped_trips.timestamp " +
                 "ORDER BY timestamp ASC");
-        results.show(false);
-//        Dataset<Row> resultsMapped = results.map(row -> {
-//
-//        })
-//        results.withColumn("trips distribution", results.col("zone_percs").cast("string"));
-//        results
-        results.coalesce(1).write().mode("overwrite").option("header", "true").csv(Config.HDFS_URL+"/Q2SQL");
-
+        results.drop("percs_array").coalesce(1).write().mode("overwrite").option("header", "true").csv(Config.HDFS_URL+"/Q2SQL");
 
         /*
          * Salvataggio dei risultati su mongodb
@@ -152,6 +143,47 @@ public class Query2SQL extends Query {
         System.out.println("\n———————————————————————————————————————————————————————— "+this.getName()+" ————————————————————————————————————————————————————————");
         results.show();
         System.out.print("—————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————\n");
+    }
+
+    @Override
+    public void writeResultsOnCSV() {
+        String outputName = "Results/q2sql-res.csv";
+
+        try (FileWriter fileWriter = new FileWriter(outputName)) {
+//           List<String> csvLines = new
+            StringBuilder outputBuilder = new StringBuilder("YYYY-MM-DD HH;");
+            for (int i = 1; i <266 ; i++) {
+                outputBuilder.append(String.format("perc_PU%d;", i));
+            }
+            outputBuilder.append("avg_tip;stddev_tip;pref_payment\n");
+            fileWriter.append(outputBuilder.toString());
+
+            for (Row row: results.collectAsList()){
+                List<Double> percentuals = new ArrayList<>(Collections.nCopies(265, 0d));
+                outputBuilder.setLength(0);                                     // Empty builder
+
+                String timestamp = row.getString(0);
+                Double avg_tip = row.getDouble(1);
+                Double stddev_tip = row.getDouble(2);
+                Long payment = row.getLong(3);
+                List<String> distr = row.getList(5);
+                for (String s: distr){
+                    StringTokenizer tokenizer = new StringTokenizer(s, ":");
+                    int id = Integer.parseInt(tokenizer.nextToken());
+                    Double value = Double.valueOf(tokenizer.nextToken());
+                    percentuals.set(id-1, value);
+                }
+                String percentualStrings = percentuals.toString().replace(",", ";").substring(1, percentuals.toString().length()-1);
+                outputBuilder.append(String.format("%s;%s;%f;%f;%d\n", timestamp, percentualStrings, avg_tip, stddev_tip, payment));
+                fileWriter.append(outputBuilder.toString());
+            }
+
+//            System.out.println(percentuals);
+        } catch (Exception e) {
+            System.out.println("Results CSV Error: " + e.toString());
+        }
+
+
     }
 }
 

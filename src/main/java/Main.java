@@ -78,7 +78,8 @@ public class Main {
         Timestamp end = getTimestamp();
         long queryTime = end.getTime() - start.getTime();
 
-        query.printResults();
+//        query.printResults();
+        query.writeResultsOnCSV();
         printResultAnalysis(query.getName(),sparkTime, dataTime, mongoTime, queryTime);
         promptEnterKey();
     }

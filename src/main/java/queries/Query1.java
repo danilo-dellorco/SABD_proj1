@@ -49,7 +49,6 @@ public class Query1 extends Query {
             return v;
         });
 
-
         // result_list:=[month,mean_value]
         List<Tuple2<Integer, Double>> results = reduced.mapToPair(
                 r -> {

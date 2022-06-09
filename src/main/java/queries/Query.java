@@ -34,4 +34,8 @@ public abstract class Query {
         }
         System.out.println("—————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————\n");
     }
+
+    public void writeResultsOnMongo() {}
+
+    public void writeResultsOnCSV() {}
 }

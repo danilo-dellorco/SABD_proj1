@@ -22,7 +22,9 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import scala.Tuple2;
 import utils.DateComparator;
+import utils.KeyQ3;
 import utils.Tools;
+import utils.map.Zone;
 import utils.valq.ValQ3;
 
 import java.util.Comparator;
@@ -31,7 +33,10 @@ import java.util.List;
 import static utils.Tools.getMostFrequentPayment;
 import static utils.Tools.getTopFiveDestinations;
 
+//TODO sistemare commenti
+
 public class Query3 extends Query{
+    List<Tuple2<String, List<Tuple2<Long, ValQ3>>>> results;
 
     public Query3(SparkSession spark, JavaRDD<Row> dataset, MongoCollection collection, String name) {
         super(spark, dataset, collection, name);
@@ -41,16 +46,12 @@ public class Query3 extends Query{
     @Override
     public void execute() {
         // RDD:=[month,statistics]
-        JavaPairRDD<Tuple2<String,Long>, ValQ3> days = dataset.mapToPair(
-                r -> new Tuple2<>(new Tuple2<>(Tools.getDay(r.getTimestamp(0)), r.getLong(1)),
+        JavaPairRDD<KeyQ3, ValQ3> days = dataset.mapToPair(
+                r -> new Tuple2<>(new KeyQ3(Tools.getDay(r.getTimestamp(0)), r.getLong(1)),
                         new ValQ3(r.getDouble(7), r.getDouble(3), 1)));
 
-        System.out.printf("Dataset: %d\n",days.count());
-
-        // TODO aggregare le occorrenze e le statistiche di ogni cosa nel suo time slot e poi group by.
-
         // RDD:=[location_id,statistics_aggr]
-        JavaPairRDD<Tuple2<String,Long>, ValQ3> reduced = days.reduceByKey((Function2<ValQ3, ValQ3, ValQ3>) (v1, v2) -> {
+        JavaPairRDD<KeyQ3, ValQ3> reduced = days.reduceByKey((Function2<ValQ3, ValQ3, ValQ3>) (v1, v2) -> {
             Double pass = v1.getPassengers() + v2.getPassengers();
             Double fare = v1.getFare() + v2.getFare();
             Integer occ = v1.getOccurrences() + v2.getOccurrences();
@@ -59,7 +60,7 @@ public class Query3 extends Query{
         });
         System.out.printf("Reduced: %d\n",reduced.count());
 
-        JavaPairRDD<Tuple2<String,Long>, ValQ3> mean = reduced.mapToPair(
+        JavaPairRDD<KeyQ3, ValQ3> mean = reduced.mapToPair(
                 r -> {
                     Integer num_occurrences = r._2().getOccurrences();
                     Double pass_mean = r._2().getPassengers() / num_occurrences;
@@ -71,8 +72,43 @@ public class Query3 extends Query{
 
         System.out.printf("Mean: %d\n",mean.count());
 
-        JavaPairRDD<String, Iterable<Tuple2<Tuple2<String,Long>,ValQ3>>> grouped = mean.groupBy((Function<Tuple2<Tuple2<String,Long>,ValQ3>, String>) r -> r._1()._1());
+        // RDD:=[location_id,statistics_stddev_iteration]
+        JavaPairRDD<KeyQ3, Tuple2<ValQ3, ValQ3>> joined = days.join(mean);
+
+        JavaPairRDD<KeyQ3, ValQ3> iterations = joined.mapToPair(
+                r -> {
+                    Double fare_mean = r._2()._2().getFare();
+                    Double fare_val = r._2()._1().getFare();
+                    Double fare_dev = Math.pow((fare_val - fare_mean), 2);
+                    r._2()._2().setFare_stddev(fare_dev);
+
+                    return new Tuple2<>(r._1(), r._2()._2());
+                });
+
+        // RDD:=[location_id,statistics_stddev_aggregated]
+        JavaPairRDD<KeyQ3, ValQ3> stddev_aggr = iterations.reduceByKey((Function2<ValQ3, ValQ3, ValQ3>) (v1, v2) -> {
+            Double fare_total_stddev = v1.getFare_stddev() + v2.getFare_stddev();
+            ValQ3 v = new ValQ3(v1.getPassengers(), v1.getFare(), v1.getOccurrences(), fare_total_stddev);
+            return v;
+        });
+
+        // RDD:=[location_id,statistics_stddev]
+        JavaPairRDD<KeyQ3, ValQ3> deviation = stddev_aggr.mapToPair(
+                r -> {
+                    Double fare_mean = r._2().getFare();
+                    Integer n = r._2().getOccurrences();
+                    Double fare_dev = Math.sqrt(r._2().getFare_stddev() / n);
+                    Double pass_mean = r._2().getPassengers();
+                    ValQ3 v = new ValQ3(pass_mean, fare_mean, n, fare_dev);
+                    return new Tuple2<>(r._1(), v);
+                });
+
+//        System.out.println(deviation.take(1));
+
+        JavaPairRDD<String, Iterable<Tuple2<KeyQ3,ValQ3>>> grouped = deviation.groupBy((Function<Tuple2<KeyQ3,ValQ3>, String>) r -> r._1().getDay());
         System.out.printf("Grouped: %d\n",grouped.count());
+
+//        System.out.println("Grouped: " + grouped.take(1));
 
         // [(Mese,Destinazione), statistiche]
         // Tuple2< Tuple2<String,Long> ,ValQ3 >>
@@ -82,60 +118,26 @@ public class Query3 extends Query{
                         getTopFiveDestinations(r._2())
                 ));
 
-        // RDD:=[location_id,statistics_stdev_iteration]
-        JavaPairRDD<Tuple2<String,Long>, Tuple2<ValQ3, ValQ3>> joined = days.join(mean);
-        System.out.println(joined.take(1));
+        results = top_destinations.sortByKey(new DateComparator()).collect();
+    }
 
-        JavaPairRDD<Tuple2<String,Long>, ValQ3> iterations = joined.mapToPair(
-                r -> {
-                    Double fare_mean = r._2()._2().getFare();
-                    Double fare_val = r._2()._1().getFare();
-                    Double fare_dev = Math.pow((fare_val - fare_mean), 2);
-                    r._2()._2().setFare_stddev(fare_dev);
+    // TODO finire 
+    @Override
+    public void writeResultsOnMongo() {
+        for (Tuple2<String, List<Tuple2<Long,ValQ3>>> r : results) {
+            String day = r._1();
+            Integer zoneId1 = Math.toIntExact(r._2().get(0)._1());
+            Integer zoneId2 = Math.toIntExact(r._2().get(1)._1());
+            Integer zoneId3 = Math.toIntExact(r._2().get(2)._1());
+            Integer zoneId4 = Math.toIntExact(r._2().get(3)._1());
+            Integer zoneId5 = Math.toIntExact(r._2().get(4)._1());
 
-                    return new Tuple2<>(r._1(), r._2()._2());
-                });
-//
-//        // RDD:=[location_id,statistics_stdev_aggregated]
-//        JavaPairRDD<Long, ValQ3> stddev_aggr = iterations.reduceByKey((Function2<ValQ3, ValQ3, ValQ3>) (v1, v2) -> {
-//            Double fare_total_stddev = v1.getFare_stddev() + v2.getFare_stddev();
-//            ValQ3 v = new ValQ3(v1.getPassengers(), v1.getFare(), v1.getOccurrences(), fare_total_stddev);
-//            return v;
-//        });
-//
-//        // RDD:=[location_id,statistics_stdev]
-//        JavaPairRDD<Long, ValQ3> deviation = stddev_aggr.mapToPair(
-//                r -> {
-//                    Double fare_mean = r._2().getFare();
-//                    Integer n = r._2().getOccurrences();
-//                    Double fare_dev = Math.sqrt(r._2().getFare_stddev() / n);
-//                    Double pass_mean = r._2().getPassengers();
-//                    ValQ3 v = new ValQ3(pass_mean, fare_mean, n, fare_dev);
-//                    return new Tuple2<>(r._1(), v);
-//                });
-//
-//        // Swap della chiave con il numero di occorrenze
-//        // RDD:=[occurrences,(location_id,passengers,fare,fare_stdev))]
-//        JavaPairRDD<Integer, Tuple4<Long, Double, Double, Double>> sorted = deviation
-//                .mapToPair( x ->
-//                        new Tuple2<>(
-//                                x._2().getOccurrences(),
-//                                new Tuple4<>(
-//                                    x._1(),
-//                                    x._2().getPassengers(),
-//                                    x._2().getFare(),
-//                                    x._2().getFare_stddev())))
-//                .sortByKey(false);
-//
-//        // Top 5 dei risultati in base al numero di occorrenze
-//        List<Tuple2<Integer, Tuple4<Long, Double, Double, Double>>> top = sorted.take(5);
-//
-//        /**
-//         * Salvataggio dei risultati su mongodb
-//         */
-//        for (Tuple2<Integer, Tuple4<Long, Double, Double, Double>> t : top) {
-//            Integer zoneId = Math.toIntExact(t._2()._1());
-//            String zoneName =  Zone.zoneMap.get(zoneId);
+            String zone1 = Zone.zoneMap.get(zoneId1);
+            String zone2 = Zone.zoneMap.get(zoneId2);
+            String zone3 = Zone.zoneMap.get(zoneId3);
+            String zone4 = Zone.zoneMap.get(zoneId4);
+            String zone5 = Zone.zoneMap.get(zoneId5);
+
 //            Integer occ = t._1();
 //
 //            Document document = new Document();
@@ -144,6 +146,11 @@ public class Query3 extends Query{
 //            document.append("occurrences", occ);
 //
 //            collection.insertOne(document);
-//        }
+        }
+    }
+
+    @Override
+    public void writeResultsOnCSV() {
+        super.writeResultsOnCSV();
     }
 }

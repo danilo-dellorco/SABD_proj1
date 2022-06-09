@@ -15,7 +15,7 @@ public class DateComparator  implements Comparator<String>, Serializable {
             return 1;
         }
         int cmp = obj1.compareTo(obj2);
-        System.out.printf("%s :: %s -> %d\n",obj1,obj2,cmp);
+//        System.out.printf("%s :: %s -> %d\n",obj1,obj2,cmp);
         return cmp;
     }
 }

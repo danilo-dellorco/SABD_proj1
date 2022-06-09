@@ -45,23 +45,24 @@ public class Tools {
         return new Tuple2<>(max._2(), maxVal);
     }
 
-    public static List<Tuple2<Long, ValQ3>> getTopFiveDestinations(Iterable<Tuple2<Tuple2<String, Long>, ValQ3>> list) {
+    public static List<Tuple2<Long, ValQ3>> getTopFiveDestinations(Iterable<Tuple2<KeyQ3, ValQ3>> list) {
 
         List<Tuple2<Long,ValQ3>> top = new ArrayList<>();
         List<Long> topId = new ArrayList<>();
         int n = 0;
 
         while (n!=5) {
-            Iterator<Tuple2<Tuple2<String, Long>, ValQ3>> iterator = list.iterator();
+            Iterator<Tuple2<KeyQ3, ValQ3>> iterator = list.iterator();
             Tuple2<Long, ValQ3> max = null;
             Integer maxVal = 0;
             Long maxId = 0L;
 
             // [(Mese,Destinazione), statistiche]
             while (iterator.hasNext()) {
-                Tuple2<Tuple2<String, Long>, ValQ3> element = iterator.next();
+                Tuple2<KeyQ3, ValQ3> element = iterator.next();
+//                System.out.println(element._2().toString());
 
-                Tuple2<Long, ValQ3> actual = new Tuple2<>(element._1()._2(),element._2());
+                Tuple2<Long, ValQ3> actual = new Tuple2<>(element._1().getDest(),element._2());
                 Integer actualVal = actual._2().getOccurrences();
                 Long actualId = actual._1();
                 if (actualVal >= maxVal && !topId.contains(actualId)) {

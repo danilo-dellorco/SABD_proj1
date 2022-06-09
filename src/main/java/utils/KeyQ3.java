@@ -1,6 +1,9 @@
+package utils;
+
+import java.io.Serializable;
 import java.util.Objects;
 
-public class KeyQ3 {
+public class KeyQ3 implements Serializable {
     String day;
     Long dest;
 
@@ -36,5 +39,13 @@ public class KeyQ3 {
     @Override
     public int hashCode() {
         return Objects.hash(day, dest);
+    }
+
+    @Override
+    public String toString() {
+        return "KeyQ3{" +
+                "day='" + day + '\'' +
+                ", dest=" + dest +
+                '}';
     }
 }

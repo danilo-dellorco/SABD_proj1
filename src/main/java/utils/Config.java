@@ -2,8 +2,8 @@ package utils;
 
 public class Config {
     public static final String EXEC_MODE = "LOCAL"; //{LOCAL,DOCKER}
-    public static final String DATA_MODE = "UNLIMITED"; //{LIMITED,UNLIMITED}
-    public static final int LIMIT_NUM = 1000;
+    public static final String DATA_MODE = "LIMITED"; //{LIMITED,UNLIMITED}
+    public static final int LIMIT_NUM = 10000;
 
     public static final String NUM_WORKERS = "3";
     public static final String LOCAL_SPARK_URL = "local["+NUM_WORKERS+"]";
@@ -13,7 +13,7 @@ public class Config {
     public static final String HDFS_URL = "hdfs://hdfs-master:54310";
 
 
-//    public static final String YELLOW_DATASET = "/filtered.parquet";
+//    public static final String YELLOW_DATASET = "/test.parquet";
     public static final String YELLOW_DATASET = "/filtered.parquet";
     public static final String GREEN_DATASET = "/green.parquet";
 

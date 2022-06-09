@@ -118,10 +118,10 @@ public class Tools {
         return String.format("%d min, %d sec (%d ms)", minutes, seconds, milliseconds);
     }
 
-    public static void printResultAnalysis(String queryName, long sparkTime, long dataTime, long mongoTime, long queryTime) throws IOException, InterruptedException {
+    public static void printResultAnalysis(String queryName, long sparkTime, long dataTime, long mongoSetupTime, long queryExecTime, long mongoSaveTime, long csvSaveTime){
         System.out.println("\n\n════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════");
         System.out.println("                                                       " + queryName + " EXECUTION ANALYSIS");
-        System.out.println("════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════");
+        System.out.println("╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════");
         System.out.println("║————————————————————————————————————————————————————— Environment Specs —————————————————————————————————————————————————————");
         String nameOS = System.getProperty("os.name");
         String versionOS = System.getProperty("os.version");
@@ -154,13 +154,17 @@ public class Tools {
         System.out.println("║ Data Mode     : " + Config.DATA_MODE);
         System.out.println("║ —————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————");
 
+        long totalTime = sparkTime+dataTime+mongoSetupTime+queryExecTime+mongoSaveTime+csvSaveTime;
         System.out.println("║——————————————————————————————————————————————————————— Response Time —————————————————————————————————————————————————————");
-        System.out.println("║ Spark setup time     : " + toMinutes(sparkTime));
-        System.out.println("║ Dataset load time    : " + toMinutes(dataTime));
-        System.out.println("║ Mongo setup time     : " + toMinutes(mongoTime));
-        System.out.println("║ Query execution time : " + toMinutes(queryTime));
-        System.out.println("║—————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————");
-        System.out.println("════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════");
+        System.out.println("║ TOTAL RESPONSE TIME     : " + toMinutes(totalTime));
+        System.out.println("║———————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————");
+        System.out.println("║ ┌ Query execution time  : " + toMinutes(queryExecTime));
+        System.out.println("║ ├ Spark setup time      : " + toMinutes(sparkTime));
+        System.out.println("║ ├ Mongo setup time      : " + toMinutes(mongoSetupTime));
+        System.out.println("║ ├ Dataset load time     : " + toMinutes(dataTime));
+        System.out.println("║ ├ Mongo Save Results    : " + toMinutes(mongoSaveTime));
+        System.out.println("║ └ CSV Save Results      : " + toMinutes(csvSaveTime));
+        System.out.println("╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════");
     }
 
     public static String byteToGB(long bytes) {

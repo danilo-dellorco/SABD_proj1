@@ -1,6 +1,5 @@
 package queriesSQL;
 
-import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
@@ -53,7 +52,7 @@ public class Query1SQL extends Query {
     }
 
     @Override
-    public void execute() {
+    public long execute() {
         Dataset<Row> data = createSchemaFromRDD(spark, dataset);
         data.createOrReplaceTempView("taxi_row");
         Dataset<Row> values = spark.sql("SELECT month(tpep_dropoff_datatime) AS month, " +
@@ -78,6 +77,7 @@ public class Query1SQL extends Query {
 
             collection.insertOne(doc);
         }
+        return 0;
     }
 
     @Override

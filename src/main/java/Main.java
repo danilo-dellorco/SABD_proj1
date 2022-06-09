@@ -35,15 +35,15 @@ public class Main {
     public static String green_dataset_path;
     public static String spark_url;
 
-
-    //TODO vedere il caching per gli RDD riacceduti
-    //TODO rimuovere i sortbykey intermedi perchè sono wide transformation. Non dovrebbero avere utilità pratiche ma li usavamo solo per i print intermedi (sopratutto query2)
-    //TODO vedere i DAG delle query e togliere cose inutili
+    // TODO mettere nella relazione la pulizia del dataset insomma righe e colonne tolte e perché.
+    // TODO vedere il caching per gli RDD riacceduti
+    // TODO rimuovere i sortbykey intermedi perchè sono wide transformation. Non dovrebbero avere utilità pratiche ma li usavamo solo per i print intermedi (sopratutto query2)
+    // TODO vedere i DAG delle query e togliere cose inutili
     public static void main(String[] args) throws IOException, InterruptedException {
         setExecMode();
-        long sparkTime = initSpark();
-        long dataTime = loadDataset();
-        long mongoTime = initMongo();
+        long sparkSetupTime = initSpark();
+        long dataLoadTime = loadDataset();
+        long mongoSetupTime = initMongo();
         turnOffLogger();
 
         Query1 q1 = new Query1(spark, yellowRDD,collections.get(0), "QUERY 1");
@@ -74,13 +74,12 @@ public class Main {
                 query=q2SQL;
                 break;
         }
-        Timestamp start = getTimestamp();
-        query.execute();
-        Timestamp end = getTimestamp();
-        long queryTime = end.getTime() - start.getTime();
+        long queryExecTime = query.execute();
+        long mongoSaveTime = query.writeResultsOnMongo();
+        long csvSaveTime = query.writeResultsOnCSV();
 
-        query.printResults();
-        printResultAnalysis(query.getName(),sparkTime, dataTime, mongoTime, queryTime);
+//        query.printResults();
+        printResultAnalysis(query.getName(),sparkSetupTime, dataLoadTime, mongoSetupTime, queryExecTime,mongoSaveTime,csvSaveTime);
         promptEnterKey();
     }
 

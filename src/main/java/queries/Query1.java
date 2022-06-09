@@ -25,7 +25,10 @@ import utils.valq.ValQ1;
 import utils.Tools;
 
 import java.io.FileWriter;
+import java.sql.Timestamp;
 import java.util.List;
+
+import static utils.Tools.getTimestamp;
 
 @SuppressWarnings("ALL")
 public class Query1 extends Query {
@@ -36,7 +39,7 @@ public class Query1 extends Query {
     }
 
     @Override
-    public void execute() {
+    public long execute() {
         // RDD:=[month,values]
         JavaPairRDD<String, ValQ1> taxiRows = dataset.mapToPair(
                 r -> {
@@ -77,11 +80,12 @@ public class Query1 extends Query {
 
         writeResultsOnMongo();
         writeResultsOnCSV();
+        return 0;
     }
 
     @Override
-    public void writeResultsOnMongo() {
-
+    public long writeResultsOnMongo() {
+        Timestamp start = getTimestamp();
         for (Tuple2<String, Tuple2<Double,Integer>> r : results) {
             String month = r._1();
             Double percentage = r._2()._1();
@@ -94,12 +98,14 @@ public class Query1 extends Query {
 
             collection.insertOne(document);
         }
+        Timestamp end = getTimestamp();
+        return end.getTime()-start.getTime();
     }
 
 
     @Override
-    public void writeResultsOnCSV() {
-//        String outputName = Config.HDFS_URL+"/"+"q1-res.csv";
+    public long writeResultsOnCSV() {
+        Timestamp start = getTimestamp();
         String outputName = "Results/query1.csv";
 
         try (FileWriter fileWriter = new FileWriter(outputName)) {
@@ -115,5 +121,7 @@ public class Query1 extends Query {
         } catch (Exception e) {
             System.out.println("Results CSV Error: " + e.toString());
         }
+        Timestamp end = getTimestamp();
+        return end.getTime() - start.getTime();
     }
 }

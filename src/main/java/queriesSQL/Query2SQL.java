@@ -53,7 +53,7 @@ public class Query2SQL extends Query {
     }
 
     @Override
-    public void execute() {
+    public long execute() {
         Dataset<Row> data = createSchemaFromRDD(spark, dataset);
         data.createOrReplaceTempView("trip_infos");
 
@@ -90,6 +90,7 @@ public class Query2SQL extends Query {
 
             collection.insertOne(doc);
         }
+        return 0;
     }
 
     @Override

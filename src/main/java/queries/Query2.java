@@ -33,7 +33,7 @@ public class Query2 extends Query{
         super(spark, dataset, collection, name);
     }
 
-    public void execute() {
+    public long execute() {
 
         // RDD:=[time_slot,statistics]
         JavaPairRDD<String, ValQ2> aggregated = dataset.mapToPair(r ->
@@ -151,5 +151,6 @@ public class Query2 extends Query{
 
             collection.insertOne(document);
         }
+        return 0;
     }
 }

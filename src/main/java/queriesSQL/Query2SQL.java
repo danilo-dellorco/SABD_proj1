@@ -4,10 +4,15 @@ import com.mongodb.client.MongoCollection;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
-import org.apache.spark.sql.*;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.RowFactory;
+import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
+import org.bson.Document;
+import org.jcp.xml.dsig.internal.dom.DOMCanonicalizationMethod;
 import queries.Query;
 import utils.Config;
 
@@ -15,6 +20,8 @@ import java.io.FileWriter;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.*;
+
+import static utils.Tools.getTimestamp;
 
 public class Query2SQL extends Query {
     Dataset<Row> results;
@@ -38,34 +45,21 @@ public class Query2SQL extends Query {
         sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
 
         JavaRDD<Row> rowRDD = dataset.map((Function<Row, Row>)
-                v1 ->{
+                v1 -> {
                     Timestamp ts = v1.getTimestamp(0);
                     cal.setTime(ts);
                     Timestamp ts_zone = Timestamp.valueOf(sdf.format(cal.getTime()));
-            return RowFactory.create(ts_zone, v1.getLong(2), v1.getLong(4), v1.getDouble(6));
+                    return RowFactory.create(ts_zone, v1.getLong(2), v1.getLong(4), v1.getDouble(6));
                 });
 
 
         return spark.createDataFrame(rowRDD, schema);
     }
 
-    public void createZoneDataframe(){
-        List<Row> range_zones = new ArrayList<>();
-        for (int i = 1; i <266 ; i++) {
-            range_zones.add(RowFactory.create(i));
-        }
-
-        JavaRDD<Row> zonesRDD = JavaSparkContext.fromSparkContext(spark.sparkContext()).parallelize(range_zones);
-        StructType schema = DataTypes.createStructType(new StructField[]{DataTypes.createStructField("zone_id", DataTypes.IntegerType, false)});
-        Dataset<Row> zones = spark.createDataFrame(zonesRDD, schema);
-        zones.createOrReplaceTempView("zones_id");
-    }
-
-    @Override
     public long execute() {
+        Timestamp start = getTimestamp();
         Dataset<Row> data = createSchemaFromRDD(spark, dataset);
         data.createOrReplaceTempView("trip_infos");
-//        createZoneDataframe();
 
 
         // {timestamp, zone}, trips, total_trip_per_hour, zone_perc
@@ -76,7 +70,7 @@ public class Query2SQL extends Query {
                 "JOIN " +
                 "(SELECT date_format(tpep_pickup_datatime, 'y-MM-dd HH') as timestamp_2, count(*) AS total_trip_hour from trip_infos group by timestamp_2)" +
                 "ON timestamp = timestamp_2 ORDER BY timestamp ASC");
-        scheduledTrips.show();
+//        scheduledTrips.show();
         scheduledTrips.createOrReplaceTempView("scheduled_trips");
 
 
@@ -92,7 +86,7 @@ public class Query2SQL extends Query {
 
         // {timestamp}, payment_type, occurrences
         Dataset<Row> paymentOccurrences = spark.sql("SELECT date_format(tpep_pickup_datatime, 'y-MM-dd HH') AS timestamp, payment_type, COUNT(*) AS counted " +
-                        " FROM trip_infos GROUP BY timestamp, payment_type " +
+                " FROM trip_infos GROUP BY timestamp, payment_type " +
                 "ORDER BY timestamp ASC");
         paymentOccurrences.createOrReplaceTempView("payment_occurrences");
 
@@ -107,53 +101,33 @@ public class Query2SQL extends Query {
                 "hourly_values JOIN most_popular_payment ON hourly_values.timestamp = most_popular_payment.timestamp) table_1 " +
                 "JOIN grouped_trips ON table_1.timestamp = grouped_trips.timestamp " +
                 "ORDER BY timestamp ASC");
-        results.drop("percs_array").coalesce(1).write().mode("overwrite").option("header", "true").csv(Config.HDFS_URL+"/Q2SQL");
+        results.drop("percs_array").coalesce(1).write().mode("overwrite").option("header", "true").csv(Config.HDFS_URL + "/Q2SQL");
 
-        /*
-         * Salvataggio dei risultati su mongodb
-
-        List<Row> resultsList = results.collectAsList();
-        for (Row r : resultsList){
-            Integer payment = Integer.valueOf((int) r.getLong(1));      // Casting for bson documents
-            Integer counted = Integer.valueOf((int) r.getLong(2));      // Casting for bson documents
-            Document doc = new Document();
-            doc.append("hour_slot", r.getInt(0));
-            doc.append("payment_type", payment);
-            doc.append("payment_name", Payment.staticMap.get(payment));
-            doc.append("payment_occ", counted);
-            doc.append("tip_avg", r.getDouble(3));
-            doc.append("tip_stddev", r.getDouble(4));
-            doc.append("tip_stddev", r.get);
-
-            collection.insertOne(doc);
-
-
-        }
-        */
-        return 0;
+        Timestamp end = getTimestamp();
+        return end.getTime() - start.getTime();
     }
 
     @Override
     public void printResults() {
-        System.out.println("\n———————————————————————————————————————————————————————— "+this.getName()+" ————————————————————————————————————————————————————————");
+        System.out.println("\n———————————————————————————————————————————————————————— " + this.getName() + " ————————————————————————————————————————————————————————");
         results.show();
         System.out.print("—————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————\n");
     }
 
     @Override
     public long writeResultsOnCSV() {
+        Timestamp start = getTimestamp();
         String outputName = "Results/q2sql-res.csv";
 
         try (FileWriter fileWriter = new FileWriter(outputName)) {
 //           List<String> csvLines = new
             StringBuilder outputBuilder = new StringBuilder("YYYY-MM-DD HH;");
-            for (int i = 1; i <266 ; i++) {
+            for (int i = 1; i < 266; i++) {
                 outputBuilder.append(String.format("perc_PU%d;", i));
             }
             outputBuilder.append("avg_tip;stddev_tip;pref_payment\n");
             fileWriter.append(outputBuilder.toString());
-
-            for (Row row: results.collectAsList()){
+            for (Row row : results.collectAsList()) {
                 List<Double> percentuals = new ArrayList<>(Collections.nCopies(265, 0d));
                 outputBuilder.setLength(0);                                     // Empty builder
 
@@ -162,22 +136,47 @@ public class Query2SQL extends Query {
                 Double stddev_tip = row.getDouble(2);
                 Long payment = row.getLong(3);
                 List<String> distr = row.getList(5);
-                for (String s: distr){
+                for (String s : distr) {
                     StringTokenizer tokenizer = new StringTokenizer(s, ":");
                     int id = Integer.parseInt(tokenizer.nextToken());
                     Double value = Double.valueOf(tokenizer.nextToken());
-                    percentuals.set(id-1, value);
+                    percentuals.set(id - 1, value);
                 }
-                String percentualStrings = percentuals.toString().replace(",", ";").substring(1, percentuals.toString().length()-1);
+                String percentualStrings = percentuals.toString().replace(",", ";").substring(1, percentuals.toString().length() - 1);
                 outputBuilder.append(String.format("%s;%s;%f;%f;%d\n", timestamp, percentualStrings, avg_tip, stddev_tip, payment));
                 fileWriter.append(outputBuilder.toString());
             }
-
-//            System.out.println(percentuals);
         } catch (Exception e) {
-            System.out.println("Results CSV Error: " + e.toString());
+            System.out.println("Results CSV Error: " + e);
         }
-        return 0;
+        Timestamp end = getTimestamp();
+        return end.getTime() - start.getTime();
+    }
+
+    @Override
+    public long writeResultsOnMongo() {
+        Timestamp start = getTimestamp();
+
+        for (Row row : results.collectAsList()) {
+            String timestamp = row.getString(0);
+            List<String> distr = row.getList(5);
+
+            Document document = new Document();
+            document.append("YYYY-MM-DD HH", timestamp);
+            for (String s : distr) {
+                StringTokenizer tokenizer = new StringTokenizer(s, ":");
+                int id = Integer.parseInt(tokenizer.nextToken());
+                Double value = Double.valueOf(tokenizer.nextToken());
+                document.append("perc_PU"+id, value);
+
+            }
+            document.append("avg_tip", row.getDouble(1));
+            document.append("stddev_tip", row.getDouble(2));
+            document.append("pref_payment", (int) row.getLong(3));
+            collection.insertOne(document);
+        }
+        Timestamp end = getTimestamp();
+        return end.getTime() - start.getTime();
     }
 }
 

@@ -2,7 +2,7 @@ package utils;
 
 public class Config {
     public static final String EXEC_MODE = "LOCAL"; //{LOCAL,DOCKER}
-    public static final String DATA_MODE = "LIMITED"; //{LIMITED,UNLIMITED}
+    public static final String DATA_MODE = "UNLIMITED"; //{LIMITED,UNLIMITED}
     public static final int LIMIT_NUM = 10000;
 
     public static final String NUM_WORKERS = "3";
@@ -12,17 +12,10 @@ public class Config {
     public static final String SPARK_URL = "spark://spark-master:7077";
     public static final String HDFS_URL = "hdfs://hdfs-master:54310";
 
+    public static final String DATASET_NAME = "/filtered.parquet";
 
-//    public static final String YELLOW_DATASET = "/test.parquet";
-    public static final String YELLOW_DATASET = "/filtered.parquet";
-
-    public static final String DATASET_PATH = HDFS_URL + YELLOW_DATASET;
-    public static final String LOCAL_DATASET_PATH = LOCAL_DATA_URL + YELLOW_DATASET;
-    
-    public static final String DAT1_PATH = HDFS_URL + "/filtered-dec.parquet";
-    public static final String LOCAL_STRING = LOCAL_DATA_URL + "/filtered-dec.parquet";
-    public static final String DAT2_PATH = HDFS_URL + "/yellow_tripdata_2022-01.parquet";
-    public static final String DAT3_PATH = HDFS_URL + "/yellow_tripdata_2022-02.parquet";
+    public static final String DATASET_PATH = HDFS_URL + DATASET_NAME;
+    public static final String LOCAL_DATASET_PATH = LOCAL_DATA_URL + DATASET_NAME;
 
     public static final String JAR_PATH = HDFS_URL + "/sabd-proj-1.0.jar";
     public static final String LOCAL_JAR_PATH = "target" + "/sabd-proj-1.0.jar";

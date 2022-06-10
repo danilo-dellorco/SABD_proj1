@@ -14,6 +14,7 @@ import queriesSQL.Query2SQL;
 import queriesSQL.Query3SQL;
 import utils.Config;
 
+import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,7 +24,7 @@ import static utils.Tools.*;
 
 public class Main {
     public static SparkSession spark = null;
-    public static JavaRDD<Row> javaRDD = null;
+    public static JavaRDD<Row> datasetRDD = null;
     public static List<MongoCollection> collections = null;
     public static Query query;
 
@@ -31,26 +32,24 @@ public class Main {
     public static String dataset_path;
     public static String spark_url;
 
-
-    //TODO vedere il caching per gli RDD riacceduti
-    //TODO rimuovere i sortbykey intermedi perchè sono wide transformation. Non dovrebbero avere utilità pratiche ma li usavamo solo per i print intermedi (sopratutto query2)
-    //TODO vedere i DAG delle query e togliere cose inutili
-    //TODO cambiare le get delle colonne con indice sul dataset nelle query perchè è cambiato il dataset filtrato
-
-    public static void main(String[] args) {
+    // TODO mettere nella relazione la pulizia del dataset insomma righe e colonne tolte e perché.
+    // TODO vedere il caching per gli RDD riacceduti
+    // TODO rimuovere i sortbykey intermedi perchè sono wide transformation. Non dovrebbero avere utilità pratiche ma li usavamo solo per i print intermedi (sopratutto query2)
+    // TODO vedere i DAG delle query e togliere cose inutili
+    public static void main(String[] args) throws IOException, InterruptedException {
         setExecMode();
-        initSpark();
-        loadDataset();
-        initMongo();
+        long sparkSetupTime = initSpark();
+        long dataLoadTime = loadDataset();
+        long mongoSetupTime = initMongo();
         turnOffLogger();
 
-        Query1 q1 = new Query1(spark, javaRDD, collections.get(0), "QUERY 1");
-        Query2 q2 = new Query2(spark, javaRDD, collections.get(1), "QUERY 2");
-        Query3 q3 = new Query3(spark, javaRDD, collections.get(2), "QUERY 3");
+        Query1 q1 = new Query1(spark, datasetRDD,collections.get(0), "QUERY 1");
+        Query2 q2 = new Query2(spark, datasetRDD,collections.get(1), "QUERY 2");
+        Query3 q3 = new Query3(spark, datasetRDD,collections.get(2), "QUERY 3");
 
-        Query1SQL q1SQL = new Query1SQL(spark, javaRDD, collections.get(3), "QUERY 1 SQL");
-        Query2SQL q2SQL = new Query2SQL(spark, javaRDD, collections.get(4), "QUERY 2 SQL");
-        Query3SQL q3SQL = new Query3SQL(spark, javaRDD, collections.get(5), "QUERY 3 SQL");
+        Query1SQL q1SQL = new Query1SQL(spark, datasetRDD, collections.get(3), "QUERY 1 SQL");
+        Query2SQL q2SQL = new Query2SQL(spark, datasetRDD, collections.get(4), "QUERY 2 SQL");
+        Query3SQL q3SQL = new Query3SQL(spark, datasetRDD, collections.get(5), "QUERY 3 SQL");
 
         switch (args[0]) {
             case ("Q1"):
@@ -72,14 +71,12 @@ public class Main {
                 query=q3SQL;
                 break;
         }
-
-        printSystemSpecs();
         long queryExecTime = query.execute();
         long mongoSaveTime = query.writeResultsOnMongo();
         long csvSaveTime = query.writeResultsOnCSV();
+
         query.printResults();
-        System.out.println(String.format("%s execution time: %s", query.getName(), toMinutes(queryExecTime)));
-        System.out.println(String.format("%s save mongo and csv time: %s", toMinutes(mongoSaveTime), toMinutes(csvSaveTime)));
+        printResultAnalysis(query.getName(),sparkSetupTime, dataLoadTime, mongoSetupTime, queryExecTime,mongoSaveTime,csvSaveTime);
         promptEnterKey();
     }
 
@@ -87,7 +84,9 @@ public class Main {
      * Inizializza il client mongodb per scrivere i risultati delle query.
      * @return lista di collezioni su cui ogni query scrive il proprio output
      */
-    public static void initMongo() {
+    public static long initMongo() {
+        Timestamp start = getTimestamp();
+
         MongoClient mongo = new MongoClient(new MongoClientURI(Config.MONGO_URL)); //add mongo-server to /etc/hosts
         MongoDatabase db = mongo.getDatabase(Config.MONGO_DB);
         if (db.listCollectionNames().into(new ArrayList<>()).contains(Config.MONGO_Q1)) {
@@ -123,13 +122,16 @@ public class Main {
         MongoCollection collection2_SQL = db.getCollection(Config.MONGO_Q2SQL);
         MongoCollection collection3_SQL = db.getCollection(Config.MONGO_Q3SQL);
 
-        collections = Arrays.asList(collection1, collection2, collection3, collection1_SQL, collection2_SQL, collection3_SQL);
+        collections = Arrays.asList(collection1,collection2,collection3, collection1_SQL, collection2_SQL, collection3_SQL);
+        Timestamp end = getTimestamp();
+        return end.getTime()-start.getTime();
     }
 
     /**
      * Inizializza Spark ritornando la spark session
      */
-    public static void initSpark() {
+    public static long initSpark() {
+        Timestamp start = getTimestamp();
         SparkConf conf = new SparkConf().setJars(new String[]{jar_path});
         spark = SparkSession
                 .builder()
@@ -137,18 +139,23 @@ public class Main {
                 .master(spark_url)
                 .appName("SABD Proj 1")
                 .getOrCreate();
+        Timestamp end = getTimestamp();
+        return end.getTime()-start.getTime();
     }
 
     /**
      * Carica il dataset nel sistema, convertendolo da Parquet in un RDD
      */
-    public static void loadDataset() {
+    public static long loadDataset() {
+        Timestamp start = getTimestamp();
         if (Config.DATA_MODE.equals("UNLIMITED")) {
-            javaRDD = spark.read().option("header", "false").parquet(dataset_path).toJavaRDD();
+            datasetRDD = spark.read().option("header", "false").parquet(dataset_path).toJavaRDD();
         }
         else {
-            javaRDD = spark.read().option("header", "false").parquet(dataset_path).limit(Config.LIMIT_NUM).toJavaRDD();
+            datasetRDD = spark.read().option("header", "false").parquet(dataset_path).limit(Config.LIMIT_NUM).toJavaRDD();
         }
+        Timestamp end = getTimestamp();
+        return end.getTime()-start.getTime();
     }
 
     /**

@@ -21,6 +21,8 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.TimeZone;
 
+import static utils.Tools.getTimestamp;
+
 public class Query1SQL extends Query {
     Dataset<Row> results;
     public Query1SQL(SparkSession spark, JavaRDD<Row> dataset, MongoCollection collection, String name) {

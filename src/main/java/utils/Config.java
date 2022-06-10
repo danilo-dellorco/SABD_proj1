@@ -30,13 +30,11 @@ public class Config {
 
     public static final String JAR_PATH = HDFS_URL + "/sabd-proj-1.0.jar";
     public static final String LOCAL_JAR_PATH = "target" + "/sabd-proj-1.0.jar";
-
     public static final String MONGO_URL  = "mongodb://mongo-server:27017";
     public static final String MONGO_DB   = "sabd1";
     public static final String MONGO_Q1   = "q1_res";
     public static final String MONGO_Q2   = "q2_res";
     public static final String MONGO_Q3   = "q3_results";
-    public static final String MONGO_Q4   = "q4_res";
     public static final String MONGO_Q1SQL = "q1sql_res";
     public static final String MONGO_Q2SQL = "q2sql_res";
 }

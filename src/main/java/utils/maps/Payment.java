@@ -14,5 +14,4 @@ public class Payment {
         staticMap.put(5,"Unknown");
         staticMap.put(6,"Voided Trip");
     }
-
 }

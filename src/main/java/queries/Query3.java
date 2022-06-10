@@ -48,6 +48,10 @@ public class Query3 extends Query{
     @Override
     public long execute() {
         Timestamp start = getTimestamp();
+
+        /**
+         * Calcolo delle medie per ogni destinazione in ogni fascia oraria
+         */
         // RDD:=[(day,DO),statistics]
         JavaPairRDD<KeyQ3, ValQ3> days = dataset.mapToPair(
                 r -> new Tuple2<>(new KeyQ3(Tools.getDay(r.getTimestamp(1)), r.getLong(3)),
@@ -73,6 +77,10 @@ public class Query3 extends Query{
                             new ValQ3(pass_mean, fare_mean, num_occurrences));
                 });
 
+
+        /**
+         * Calcolo della deviazione standard per ogni destinazione in ogni fascia oraria
+         */
         // RDD:=[(day,DO),(statistics,statistics_mean)]
         JavaPairRDD<KeyQ3, Tuple2<ValQ3, ValQ3>> joined = days.join(mean);
 
@@ -105,9 +113,11 @@ public class Query3 extends Query{
                     return new Tuple2<>(r._1(), v);
                 });
 
+        /**
+         * Grouping delle statistiche per giorno, e restituzione del risultato finale
+         */
         // RDD:=[day,List<DO_with_statistics>]
         JavaPairRDD<String, Iterable<Tuple2<KeyQ3,ValQ3>>> grouped = deviation.groupBy((Function<Tuple2<KeyQ3,ValQ3>, String>) r -> r._1().getDay());
-        System.out.printf("Grouped: %d\n",grouped.count());
 
         // RDD:=[day,List<top_5_DO_with_statistics>]
         JavaPairRDD<String, List<Tuple2<Long,ValQ3>>> top_destinations = grouped.mapToPair(r ->

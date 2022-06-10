@@ -117,7 +117,7 @@ public class Query2SQL extends Query {
     @Override
     public long writeResultsOnCSV() {
         Timestamp start = getTimestamp();
-        String outputName = "Results/q2sql-res.csv";
+        String outputName = "Results/query2_sql.csv";
 
         try (FileWriter fileWriter = new FileWriter(outputName)) {
 //           List<String> csvLines = new

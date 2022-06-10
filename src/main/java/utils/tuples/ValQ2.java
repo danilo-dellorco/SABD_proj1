@@ -4,49 +4,69 @@ import java.io.Serializable;
 
 public class ValQ2 implements Serializable {
     Double tips;
-    Integer occurrences;
+    Integer num_payments;
+    Integer num_trips;
     Long payment_type;
     Double tips_stddev;
 
-    public ValQ2(Double tips, Integer occurrences) {
+    public ValQ2(Double tips, Integer num_payments) {
         setTips(tips);
-        setOccurrences(occurrences);
+        setNum_payments(num_payments);
     }
 
-    public ValQ2(Double tips, Double tips_stddev, Integer occurrences) {
+    public ValQ2(Double tips, Double tips_stddev, Integer num_payments) {
         setTips(tips);
         setTips_stddev(tips_stddev);
-        setOccurrences(occurrences);
+        setNum_payments(num_payments);
     }
 
-    public ValQ2(Double tips, Integer occurrences, Long payment_type, Double tips_stddev) {
+    public ValQ2(Double tips, Integer num_payments, Long payment_type, Double tips_stddev) {
         this.tips = tips;
-        this.occurrences = occurrences;
+        this.num_payments = num_payments;
         this.payment_type = payment_type;
         this.tips_stddev = tips_stddev;
     }
 
-    public ValQ2(Double tips_mean, Integer occurrences, Double tips_dev) {
+    public ValQ2(Double tips_mean, Integer num_payments, Double tips_dev) {
         setTips(tips_mean);
-        setOccurrences(occurrences);
+        setNum_payments(num_payments);
         setTips_stddev(tips_dev);
     }
+
+    public ValQ2(Double tips, Long payment_type, Integer num_payments) {
+        setTips(tips);
+        setTips_stddev(tips_stddev);
+        setPayment_type(payment_type);
+        setNum_payments(num_payments);
+    }
+
+    public ValQ2(Double tips, Long payment_type, Integer num_payments, Integer num_trips) {
+        setTips(tips);
+        setTips_stddev(tips_stddev);
+        setPayment_type(payment_type);
+        setNum_payments(num_payments);
+        setNum_trips(num_trips);
+    }
+
+    public ValQ2() {}
 
     @Override
     public String toString() {
         return "ValQ2{" +
                 "tips=" + tips +
-                ", occurrences=" + occurrences +
+                ", num_payments=" + num_payments +
+                ", num_trips=" + num_trips +
                 ", payment_type=" + payment_type +
                 ", tips_stddev=" + tips_stddev +
                 '}';
     }
 
-    public ValQ2(Double tips, Long payment_type, Integer occurrences) {
-        setTips(tips);
-        setTips_stddev(tips_stddev);
-        setPayment_type(payment_type);
-        setOccurrences(occurrences);
+    public Integer getNum_trips() {
+        return num_trips;
+    }
+
+    public void setNum_trips(Integer num_trips) {
+        this.num_trips = num_trips;
     }
 
     public Double getTips() {
@@ -65,12 +85,12 @@ public class ValQ2 implements Serializable {
         this.tips_stddev = tips_stddev;
     }
 
-    public Integer getOccurrences() {
-        return occurrences;
+    public Integer getNum_payments() {
+        return num_payments;
     }
 
-    public void setOccurrences(Integer occurrences) {
-        this.occurrences = occurrences;
+    public void setNum_payments(Integer num_payments) {
+        this.num_payments = num_payments;
     }
 
     public Long getPayment_type() {

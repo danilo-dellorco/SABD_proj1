@@ -21,67 +21,80 @@ import org.apache.spark.sql.SparkSession;
 import org.bson.Document;
 import scala.Tuple2;
 import scala.Tuple4;
-import utils.maps.Payment;
+import utils.DateComparator;
 import utils.Tools;
+import utils.maps.Zone;
 import utils.tuples.KeyQ2;
 import utils.tuples.ValQ2;
+import utils.tuples.ValQ3;
 
+import java.io.FileWriter;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static utils.Tools.*;
 
-public class Query2 extends Query{
-    List<Tuple2<String, Tuple2<Tuple2<ValQ2, Tuple2<Long, Integer>>, Iterable<Tuple2<KeyQ2, Integer>>>>> results;
+public class Query2 extends Query {
+    List<Tuple2<String, Tuple4<List<Tuple2<Double, Long>>, Double, Double, Long>>> results;
 
     public Query2(SparkSession spark, JavaRDD<Row> dataset, MongoCollection collection, String name) {
         super(spark, dataset, collection, name);
     }
 
     public long execute() {
+        Timestamp start = getTimestamp();
 
-        // RDD:=[time_slot,statistics]
+        // RDD:=[hour,statistics]
         JavaPairRDD<String, ValQ2> aggregated = dataset.mapToPair(r ->
-                    new Tuple2<>(Tools.getHour(r.getTimestamp(0)),
-                    new ValQ2(r.getDouble(6), r.getLong(4),1)));
+                new Tuple2<>(Tools.getHour(r.getTimestamp(0)),
+                        new ValQ2(r.getDouble(6), r.getLong(4), 1, 1)));
 
+        // RDD:=[hour,trips_total]
+        JavaPairRDD<String, ValQ2> trips = aggregated.reduceByKey((Function2<ValQ2, ValQ2, ValQ2>) (v1, v2) -> {
+            ValQ2 v = new ValQ2();
+            Integer aggr = v1.getNum_trips() + v2.getNum_trips();
+            v.setNum_trips(aggr);
+            return v;
+        });
+
+
+        // RDD:=[(hour,PU),1]
         JavaPairRDD<KeyQ2, Integer> zones = dataset.mapToPair(r ->
-                    new Tuple2<>(new KeyQ2(Tools.getHour(r.getTimestamp(0)),r.getLong(2)), 1));
+                new Tuple2<>(new KeyQ2(Tools.getHour(r.getTimestamp(0)), r.getLong(2)), 1));
 
-        // RDD:=[(time_slot,payment),occurrences]
-        JavaPairRDD<KeyQ2,Integer> red_zones = zones.reduceByKey((Function2<Integer, Integer, Integer>) (v1, v2) -> {
-            Integer occ = v1+ v2;
+        // RDD:=[(hour,PU),occurrences]
+        JavaPairRDD<KeyQ2, Integer> red_zones = zones.reduceByKey((Function2<Integer, Integer, Integer>) (v1, v2) -> {
+            Integer occ = v1 + v2;
             return occ;
         });
 
-        JavaPairRDD<String, Iterable<Tuple2<KeyQ2, Integer>>> grouped_zones = red_zones.groupBy((Function<Tuple2<KeyQ2, Integer>, String>) r -> r._1().getHour());
-        System.out.println(grouped_zones.take(1));
-
-
-
-
+        // RDD:=[hour,((hour,PU),occurrences)]
+        JavaPairRDD<String, Tuple2<Iterable<Tuple2<KeyQ2, Integer>>, ValQ2>> grouped_zones = red_zones.groupBy((Function<Tuple2<KeyQ2, Integer>, String>) r -> r._1().getHour()).join(trips);
 
         /**
-         * Calcolo del metodo di pagamento più diffuso per ogni fascia oraria
+         * Calcolo del metodo di pagamento più diffuso per ogni ora
          */
-        // RDD:=[(time_slot,payment),1]
-        JavaPairRDD<Tuple2<String, Long>,Integer> aggr_pay = aggregated.mapToPair(r ->
+        // RDD:=[(hour,payment),1]
+        JavaPairRDD<Tuple2<String, Long>, Integer> aggr_pay = aggregated.mapToPair(r ->
                 new Tuple2<>(
-                        new Tuple2 <>(
+                        new Tuple2<>(
                                 r._1(),
                                 r._2().getPayment_type())
-                ,1));
+                        , 1));
 
-        // RDD:=[(time_slot,payment),occurrences]
-        JavaPairRDD<Tuple2<String, Long>,Integer> red_pay = aggr_pay.reduceByKey((Function2<Integer, Integer, Integer>) (v1, v2) -> {
-            Integer occ = v1+ v2;
+        // RDD:=[(hour,payment),occurrences]
+        JavaPairRDD<Tuple2<String, Long>, Integer> red_pay = aggr_pay.reduceByKey((Function2<Integer, Integer, Integer>) (v1, v2) -> {
+            Integer occ = v1 + v2;
             return occ;
         });
 
-        // RDD:=[time_slot,{((time_slot,payment),occurrences)...}]
+        // RDD:=[hour,{((hour,payment),occurrences]
         JavaPairRDD<String, Iterable<Tuple2<Tuple2<String, Long>, Integer>>> grouped = red_pay.groupBy((Function<Tuple2<Tuple2<String, Long>, Integer>, String>) r -> r._1()._1());
 
         // RDD:=[time_slot,(top_payment,occurrences)]
-        JavaPairRDD<String,Tuple2<Long,Integer>> top_payments = grouped.mapToPair(r ->
+        JavaPairRDD<String, Tuple2<Long, Integer>> top_payments = grouped.mapToPair(r ->
                 new Tuple2<>(
                         r._1(),
                         getMostFrequentPayment(r._2())
@@ -90,18 +103,18 @@ public class Query2 extends Query{
         /**
          * Calcolo della media e deviazione standard di 'tips' per ogni fascia oraria
          */
-        // RDD:=[time_slot,statistics_occurrences]
+        // RDD:=[hour,statistics_occurrences]
         JavaPairRDD<String, ValQ2> reduced = aggregated.reduceByKey((Function2<ValQ2, ValQ2, ValQ2>) (v1, v2) -> {
             Double tips = v1.getTips() + v2.getTips();
-            Integer occ = v1.getOccurrences() + v2.getOccurrences();
+            Integer occ = v1.getNum_payments() + v2.getNum_payments();
             ValQ2 v = new ValQ2(tips, occ);
             return v;
         });
 
-        // RDD:=[time_slot,statistics_mean]
+        // RDD:=[hour,statistics_mean]
         JavaPairRDD<String, ValQ2> statistics = reduced.mapToPair(
                 r -> {
-                    Integer num_occurrences = r._2().getOccurrences();
+                    Integer num_occurrences = r._2().getNum_payments();
                     Double tips_mean = r._2().getTips() / num_occurrences;
 
                     return new Tuple2<>(r._1(),
@@ -110,7 +123,7 @@ public class Query2 extends Query{
 
         JavaPairRDD<String, Tuple2<ValQ2, ValQ2>> joined = aggregated.join(statistics);
 
-        // RDD:=[time_slot,statistics_deviation_it]
+        // RDD:=[hour,statistics_deviation_it]
         JavaPairRDD<String, ValQ2> iterations = joined.mapToPair(
                 r -> {
                     Double tips_mean = r._2()._2().getTips();
@@ -124,7 +137,7 @@ public class Query2 extends Query{
         // RDD:=[time_slot,statistics_deviation_sum]
         JavaPairRDD<String, ValQ2> stddev_aggr = iterations.reduceByKey((Function2<ValQ2, ValQ2, ValQ2>) (v1, v2) -> {
             Double tips_total_stddev = v1.getTips_stddev() + v2.getTips_stddev();
-            ValQ2 v = new ValQ2(v1.getTips(), v1.getOccurrences(), v1.getPayment_type(), tips_total_stddev);
+            ValQ2 v = new ValQ2(v1.getTips(), v1.getNum_payments(), v1.getPayment_type(), tips_total_stddev);
             return v;
         });
 
@@ -132,7 +145,7 @@ public class Query2 extends Query{
         JavaPairRDD<String, ValQ2> deviation = stddev_aggr.mapToPair(
                 r -> {
                     Double tips_mean = r._2().getTips();
-                    Integer n = r._2().getOccurrences();
+                    Integer n = r._2().getNum_payments();
                     Double tips_dev = Math.sqrt(r._2().getTips_stddev() / n);
                     ValQ2 v = new ValQ2(tips_mean, n, tips_dev);
                     return new Tuple2<>(r._1(), v);
@@ -141,61 +154,98 @@ public class Query2 extends Query{
         /**
          * Unione dei metodi di pagamento con le statistiche calcolate
          */
-        // RDD:=[time_slot,(statistics,(top_payment,occurrences)))]
-        JavaPairRDD<String, Tuple2<Tuple2<ValQ2, Tuple2<Long, Integer>>, Iterable<Tuple2<KeyQ2, Integer>>>> final_joined = deviation
+        // RDD:=[hour,payment_stats,trips_stats]
+        JavaPairRDD<String, Tuple2<Tuple2<ValQ2, Tuple2<Long, Integer>>, Tuple2<Iterable<Tuple2<KeyQ2, Integer>>, ValQ2>>> final_joined = deviation
                 .join(top_payments)
-                .join(grouped_zones);
+                .join(grouped_zones)
+                .sortByKey(new DateComparator());
 
-//        JavaPairRDD<String, Tuple4<List<Double>,Double,Double,Long>> results_rdd = final_joined.mapToPair(
-//                r -> {
-//                    String hour = r._1();
-//                    long topPayment = r._2()._1()._2._1();
-//                    double avgTip = r._2()._1()._1().getTips();
-//                    double devTip = r._2()._1()._1().getTips_stddev();
-//                    Integer total
-//
-//
-//
-//
-//
-//                    Double tips_mean = r._2()._2().getTips();
-//                    Double tip_val = r._2()._1().getTips();
-//                    Double tips_dev = Math.pow((tip_val - tips_mean), 2);
-//                    r._2()._2().setTips_stddev(tips_dev);
-//
-//                    return new Tuple2<>(r._1(), r._2()._2());
-//                });
+        // RDD:= [hour, List<percentages>, avgTip, devTip, topPayment]
+        JavaPairRDD<String, Tuple4<List<Tuple2<Double, Long>>, Double, Double, Long>> results_rdd = final_joined.mapToPair(
+                r -> {
+                    String hour = r._1();
+                    Long topPayment = r._2()._1()._2._1();
+                    double avgTip = r._2()._1()._1().getTips();
+                    double devTip = r._2()._1()._1().getTips_stddev();
+                    Integer totalTrips = r._2()._2()._2().getNum_trips();
+                    Iterable<Tuple2<KeyQ2, Integer>> occList = r._2()._2()._1();
 
-        results = final_joined.take(1);
-        System.out.println(results);
-        return 0;
+                    List<Tuple2<Double, Long>> percentages = calcPercentagesList(occList, totalTrips);
+
+                    return new Tuple2<>(hour, new Tuple4<>(percentages, avgTip, devTip, topPayment));
+                });
+
+        results = results_rdd.collect();
+        Timestamp end = getTimestamp();
+        return end.getTime() - start.getTime();
     }
 
     @Override
     public long writeResultsOnMongo() {
-//        for (Tuple2<String, Tuple2<Tuple2<ValQ2, Tuple2<Long, Integer>>, Iterable<Tuple2<KeyQ2, Integer>>>> r : results) {
-//            String slot = r._1();
-//            Double mean = r._2()._1()._1().getTips();
-//            Double stdev = r._2()._1()._1().getTips_stddev();
-//            Integer payment_id = Math.toIntExact(r._2()._2());
-//            String payment_name = Payment.staticMap.get(payment_id);
-//            Integer payment_occ = r._2()._2()._2();
-//
-//            Document document = new Document();
-//            document.append("hour_slot", slot);
-//            document.append("tips_mean", mean);
-//            document.append("tips_stdev", stdev);
-//            document.append("top_payment", payment_id);
-//            document.append("payment_name", payment_name);
-//            document.append("payment_occ", payment_occ);
-//
-//            collection.insertOne(document);
-//        }
-        return 0;
+        Timestamp start = getTimestamp();
+        for (Tuple2<String, Tuple4<List<Tuple2<Double, Long>>, Double, Double, Long>> r : results) {
+            String hour = r._1();
+            List<Tuple2<Double, Long>> distribution = r._2()._1();
+            Double avgTip = r._2()._2();
+            Double devTip = r._2()._3();
+            Long topPay = r._2()._4();
+
+            List<Double> percentages = new ArrayList<>(Collections.nCopies(265, 0d));
+
+            for (Tuple2<Double, Long> t : distribution) {
+                percentages.set(Math.toIntExact(t._2())-1, t._1());
+            }
+
+            Document document = new Document();
+            //header: YYYY-MM-DD-HH, perc PU1, perc PU2, ... perc PU265, avg tip, stddev tip, pref payment
+            document.append("YYYY-MM-DD-HH", hour);
+            for (int i = 0; i < 265; i++) {
+                document.append("perc PU" + (i + 1), percentages.get(i));
+            }
+            document.append("avg tip",avgTip);
+            document.append("stddev tip",devTip);
+            document.append("pref payment",topPay);
+            collection.insertOne(document);
+        }
+        Timestamp end = getTimestamp();
+        return end.getTime() - start.getTime();
     }
 
     @Override
     public long writeResultsOnCSV() {
-        return super.writeResultsOnCSV();
+        Timestamp start = getTimestamp();
+        String outputName = "Results/query2.csv";
+
+
+        try (FileWriter fileWriter = new FileWriter(outputName)) {
+            StringBuilder outputBuilder = new StringBuilder("YYYY-MM-DD HH;");
+            for (int i = 1; i < 266; i++) {
+                outputBuilder.append(String.format("perc_PU%d;", i));
+            }
+            outputBuilder.append("avg_tip;stddev_tip;pref_payment\n");
+            fileWriter.append(outputBuilder.toString());
+
+            for (Tuple2<String, Tuple4<List<Tuple2<Double, Long>>, Double, Double, Long>> r : results) {
+                outputBuilder.setLength(0);                                     // Empty builder
+                String hour = r._1();
+                List<Tuple2<Double, Long>> distribution = r._2()._1();
+                Double avgTip = r._2()._2();
+                Double devTip = r._2()._3();
+                Long topPay = r._2()._4();
+
+                List<Double> percentages = new ArrayList<>(Collections.nCopies(265, 0d));
+
+                for (Tuple2<Double, Long> t : distribution) {
+                    percentages.set(Math.toIntExact(t._2()) - 1, t._1());
+                }
+                String percStrings = percentages.toString().replace(",", ";").substring(1, percentages.toString().length() - 1);
+                outputBuilder.append(String.format("%s;%s;%f;%f;%d\n", hour, percStrings, avgTip, devTip, topPay));
+                fileWriter.append(outputBuilder.toString());
+            }
+        } catch (Exception e) {
+            System.out.println("Results CSV Error: " + e);
+        }
+        Timestamp end = getTimestamp();
+        return end.getTime() - start.getTime();
     }
 }

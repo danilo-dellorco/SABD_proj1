@@ -1,6 +1,7 @@
 package utils;
 
 import scala.Tuple2;
+import utils.tuples.KeyQ2;
 import utils.tuples.KeyQ3;
 import utils.tuples.ValQ3;
 
@@ -43,6 +44,24 @@ public class Tools {
             }
         }
         return new Tuple2<>(max._2(), maxVal);
+    }
+
+    public static List<Tuple2<Double,Long>> calcPercentagesList(Iterable<Tuple2<KeyQ2, Integer>> list, Integer t) {
+        Double total = new Double(t);
+        Iterator<Tuple2<KeyQ2, Integer>> iterator = list.iterator();
+        List<Tuple2<Double,Long>> percentages = new ArrayList<>();
+
+        Tuple2<String, Long> max = null;
+        Integer maxVal = 0;
+
+        while (iterator.hasNext()) {
+            Tuple2<KeyQ2, Integer> element = iterator.next();
+            Long zone = element._1().getSource();
+            Integer value = element._2();
+            Double perc = value/total;
+            percentages.add(new Tuple2<>(perc,zone));
+        }
+        return percentages;
     }
 
     public static List<Tuple2<Long, ValQ3>> getTopFiveDestinations(Iterable<Tuple2<KeyQ3, ValQ3>> list) {

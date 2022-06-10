@@ -197,11 +197,11 @@ public class Query2 extends Query {
             //header: YYYY-MM-DD-HH, perc PU1, perc PU2, ... perc PU265, avg tip, stddev tip, pref payment
             document.append("YYYY-MM-DD-HH", hour);
             for (int i = 0; i < 265; i++) {
-                document.append("perc PU" + (i + 1), percentages.get(i));
+                document.append("perc_PU" + (i + 1), percentages.get(i));
             }
-            document.append("avg tip",avgTip);
-            document.append("stddev tip",devTip);
-            document.append("pref payment",topPay);
+            document.append("avg_tip",avgTip);
+            document.append("stddev_tip",devTip);
+            document.append("pref_payment",topPay);
             collection.insertOne(document);
         }
         Timestamp end = getTimestamp();
@@ -217,7 +217,7 @@ public class Query2 extends Query {
         try (FileWriter fileWriter = new FileWriter(outputName)) {
             StringBuilder outputBuilder = new StringBuilder("YYYY-MM-DD HH;");
             for (int i = 1; i < 266; i++) {
-                outputBuilder.append(String.format("perc_PU%d;", i));
+                outputBuilder.append("perc_PU"+i);
             }
             outputBuilder.append("avg_tip;stddev_tip;pref_payment\n");
             fileWriter.append(outputBuilder.toString());

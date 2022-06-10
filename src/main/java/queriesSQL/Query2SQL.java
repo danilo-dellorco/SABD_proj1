@@ -2,7 +2,6 @@ package queriesSQL;
 
 import com.mongodb.client.MongoCollection;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -12,7 +11,6 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.bson.Document;
-import org.jcp.xml.dsig.internal.dom.DOMCanonicalizationMethod;
 import queries.Query;
 import utils.Config;
 
@@ -70,7 +68,7 @@ public class Query2SQL extends Query {
                 "JOIN " +
                 "(SELECT date_format(tpep_pickup_datatime, 'y-MM-dd HH') as timestamp_2, count(*) AS total_trip_hour from trip_infos group by timestamp_2)" +
                 "ON timestamp = timestamp_2 ORDER BY timestamp ASC");
-        scheduledTrips.show(10000);
+//        scheduledTrips.show();
         scheduledTrips.createOrReplaceTempView("scheduled_trips");
 
         Dataset<Row> groupedTrips = spark.sql("SELECT timestamp, collect_list(concat_ws(':', zone, zone_perc)) as zone_percs FROM scheduled_trips GROUP BY timestamp");
@@ -116,7 +114,7 @@ public class Query2SQL extends Query {
     @Override
     public long writeResultsOnCSV() {
         Timestamp start = getTimestamp();
-        String outputName = "Results/q2sql-res.csv";
+        String outputName = "Results/q2sql.csv";
 
         try (FileWriter fileWriter = new FileWriter(outputName)) {
 //           List<String> csvLines = new
@@ -127,7 +125,7 @@ public class Query2SQL extends Query {
             outputBuilder.append("avg_tip;stddev_tip;pref_payment\n");
             fileWriter.append(outputBuilder.toString());
             for (Row row : results.collectAsList()) {
-                List<Double> percentuals = new ArrayList<>(Collections.nCopies(265, 0d));
+                List<Double> percentages = new ArrayList<>(Collections.nCopies(265, 0d));
                 outputBuilder.setLength(0);                                     // Empty builder
 
                 String timestamp = row.getString(0);
@@ -139,10 +137,10 @@ public class Query2SQL extends Query {
                     StringTokenizer tokenizer = new StringTokenizer(s, ":");
                     int id = Integer.parseInt(tokenizer.nextToken());
                     Double value = Double.valueOf(tokenizer.nextToken());
-                    percentuals.set(id - 1, value);
+                    percentages.set(id - 1, value);
                 }
-                String percentualStrings = percentuals.toString().replace(",", ";").substring(1, percentuals.toString().length() - 1);
-                outputBuilder.append(String.format("%s;%s;%f;%f;%d\n", timestamp, percentualStrings, avg_tip, stddev_tip, payment));
+                String percentageString = percentages.toString().replace(",", ";").substring(1, percentages.toString().length() - 1);
+                outputBuilder.append(String.format("%s;%s;%f;%f;%d\n", timestamp, percentageString, avg_tip, stddev_tip, payment));
                 fileWriter.append(outputBuilder.toString());
             }
         } catch (Exception e) {
@@ -150,11 +148,13 @@ public class Query2SQL extends Query {
         }
         Timestamp end = getTimestamp();
         return end.getTime() - start.getTime();
+
     }
 
     @Override
     public long writeResultsOnMongo() {
         Timestamp start = getTimestamp();
+        List<Double> percentages = new ArrayList<>(Collections.nCopies(265, 0d));
 
         for (Row row : results.collectAsList()) {
             String timestamp = row.getString(0);
@@ -166,8 +166,10 @@ public class Query2SQL extends Query {
                 StringTokenizer tokenizer = new StringTokenizer(s, ":");
                 int id = Integer.parseInt(tokenizer.nextToken());
                 Double value = Double.valueOf(tokenizer.nextToken());
-                document.append("perc_PU"+id, value);
-
+                percentages.set(id - 1, value);
+            }
+            for (int i = 0; i < 265; i++) {
+                document.append("perc_PU"+(i+1), percentages.get(i));
             }
             document.append("avg_tip", row.getDouble(1));
             document.append("stddev_tip", row.getDouble(2));

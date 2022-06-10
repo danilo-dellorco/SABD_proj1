@@ -3,13 +3,13 @@ package utils.tuples;
 import java.io.Serializable;
 import java.util.Objects;
 
-public class KeyQ2 implements Serializable {
+public class KeyQ2Pay implements Serializable {
     String hour;
-    Long source;
+    Long payment;
 
-    public KeyQ2(String hour, Long source) {
+    public KeyQ2Pay(String hour, Long payment) {
         this.hour = hour;
-        this.source = source;
+        this.payment = payment;
     }
 
     public String getHour() {
@@ -20,32 +20,32 @@ public class KeyQ2 implements Serializable {
         this.hour = hour;
     }
 
-    public Long getSource() {
-        return source;
+    public Long getPayment() {
+        return payment;
     }
 
-    public void setSource(Long source) {
-        this.source = source;
+    public void setPayment(Long payment) {
+        this.payment = payment;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        KeyQ2 keyQ3 = (KeyQ2) o;
-        return Objects.equals(hour, keyQ3.hour) && Objects.equals(source, keyQ3.source);
+        KeyQ2Pay keyQ3 = (KeyQ2Pay) o;
+        return Objects.equals(hour, keyQ3.hour) && Objects.equals(payment, keyQ3.payment);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(hour, source);
+        return Objects.hash(hour, payment);
     }
 
     @Override
     public String toString() {
         return "KeyQ3{" +
                 "day='" + hour + '\'' +
-                ", dest=" + source +
+                ", dest=" + payment +
                 '}';
     }
 }

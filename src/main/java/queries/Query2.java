@@ -23,10 +23,9 @@ import scala.Tuple2;
 import scala.Tuple4;
 import utils.DateComparator;
 import utils.Tools;
-import utils.maps.Zone;
-import utils.tuples.KeyQ2;
+import utils.tuples.KeyQ2PU;
+import utils.tuples.KeyQ2Pay;
 import utils.tuples.ValQ2;
-import utils.tuples.ValQ3;
 
 import java.io.FileWriter;
 import java.sql.Timestamp;
@@ -51,6 +50,9 @@ public class Query2 extends Query {
                 new Tuple2<>(Tools.getHour(r.getTimestamp(0)),
                         new ValQ2(r.getDouble(6), r.getLong(4), 1, 1)));
 
+        /**
+         * Calcolo del numero di trips totali e di ogni zona per ogni ora
+         */
         // RDD:=[hour,trips_total]
         JavaPairRDD<String, ValQ2> trips = aggregated.reduceByKey((Function2<ValQ2, ValQ2, ValQ2>) (v1, v2) -> {
             ValQ2 v = new ValQ2();
@@ -59,49 +61,46 @@ public class Query2 extends Query {
             return v;
         });
 
-
         // RDD:=[(hour,PU),1]
-        JavaPairRDD<KeyQ2, Integer> zones = dataset.mapToPair(r ->
-                new Tuple2<>(new KeyQ2(Tools.getHour(r.getTimestamp(0)), r.getLong(2)), 1));
+        JavaPairRDD<KeyQ2PU, Integer> zones = dataset.mapToPair(r ->
+                new Tuple2<>(new KeyQ2PU(Tools.getHour(r.getTimestamp(0)), r.getLong(2)), 1));
 
         // RDD:=[(hour,PU),occurrences]
-        JavaPairRDD<KeyQ2, Integer> red_zones = zones.reduceByKey((Function2<Integer, Integer, Integer>) (v1, v2) -> {
+        JavaPairRDD<KeyQ2PU, Integer> red_zones = zones.reduceByKey((Function2<Integer, Integer, Integer>) (v1, v2) -> {
             Integer occ = v1 + v2;
             return occ;
         });
 
         // RDD:=[hour,((hour,PU),occurrences)]
-        JavaPairRDD<String, Tuple2<Iterable<Tuple2<KeyQ2, Integer>>, ValQ2>> grouped_zones = red_zones.groupBy((Function<Tuple2<KeyQ2, Integer>, String>) r -> r._1().getHour()).join(trips);
+        JavaPairRDD<String, Tuple2<Iterable<Tuple2<KeyQ2PU, Integer>>, ValQ2>> grouped_zones = red_zones.groupBy((Function<Tuple2<KeyQ2PU, Integer>, String>) r -> r._1().getHour()).join(trips);
 
         /**
          * Calcolo del metodo di pagamento più diffuso per ogni ora
          */
         // RDD:=[(hour,payment),1]
-        JavaPairRDD<Tuple2<String, Long>, Integer> aggr_pay = aggregated.mapToPair(r ->
+        JavaPairRDD<KeyQ2Pay, Integer> aggr_pay = aggregated.mapToPair(r ->
                 new Tuple2<>(
-                        new Tuple2<>(
-                                r._1(),
-                                r._2().getPayment_type())
-                        , 1));
+                        new KeyQ2Pay(r._1(),r._2().getPayment_type())
+                        ,1));
 
         // RDD:=[(hour,payment),occurrences]
-        JavaPairRDD<Tuple2<String, Long>, Integer> red_pay = aggr_pay.reduceByKey((Function2<Integer, Integer, Integer>) (v1, v2) -> {
+        JavaPairRDD<KeyQ2Pay, Integer> red_pay = aggr_pay.reduceByKey((Function2<Integer, Integer, Integer>) (v1, v2) -> {
             Integer occ = v1 + v2;
             return occ;
         });
 
         // RDD:=[hour,{((hour,payment),occurrences]
-        JavaPairRDD<String, Iterable<Tuple2<Tuple2<String, Long>, Integer>>> grouped = red_pay.groupBy((Function<Tuple2<Tuple2<String, Long>, Integer>, String>) r -> r._1()._1());
+        JavaPairRDD<String, Iterable<Tuple2<KeyQ2Pay, Integer>>> grouped = red_pay.groupBy((Function<Tuple2<KeyQ2Pay, Integer>, String>) r -> r._1().getHour());
 
         // RDD:=[time_slot,(top_payment,occurrences)]
-        JavaPairRDD<String, Tuple2<Long, Integer>> top_payments = grouped.mapToPair(r ->
+        JavaPairRDD<String, Long> top_payments = grouped.mapToPair(r ->
                 new Tuple2<>(
                         r._1(),
                         getMostFrequentPayment(r._2())
                 ));
 
         /**
-         * Calcolo della media e deviazione standard di 'tips' per ogni fascia oraria
+         * Calcolo della media e deviazione standard di 'tips' per ogni ora
          */
         // RDD:=[hour,statistics_occurrences]
         JavaPairRDD<String, ValQ2> reduced = aggregated.reduceByKey((Function2<ValQ2, ValQ2, ValQ2>) (v1, v2) -> {
@@ -152,10 +151,10 @@ public class Query2 extends Query {
                 });
 
         /**
-         * Unione dei metodi di pagamento con le statistiche calcolate
+         * Calcolo della distribuzione dei viaggi ed unione con le statistiche calcolate
          */
         // RDD:=[hour,payment_stats,trips_stats]
-        JavaPairRDD<String, Tuple2<Tuple2<ValQ2, Tuple2<Long, Integer>>, Tuple2<Iterable<Tuple2<KeyQ2, Integer>>, ValQ2>>> final_joined = deviation
+        JavaPairRDD<String, Tuple2<Tuple2<ValQ2, Long>, Tuple2<Iterable<Tuple2<KeyQ2PU, Integer>>, ValQ2>>> final_joined = deviation
                 .join(top_payments)
                 .join(grouped_zones)
                 .sortByKey(new DateComparator());
@@ -164,14 +163,12 @@ public class Query2 extends Query {
         JavaPairRDD<String, Tuple4<List<Tuple2<Double, Long>>, Double, Double, Long>> results_rdd = final_joined.mapToPair(
                 r -> {
                     String hour = r._1();
-                    Long topPayment = r._2()._1()._2._1();
+                    Long topPayment = r._2()._1()._2;
                     double avgTip = r._2()._1()._1().getTips();
                     double devTip = r._2()._1()._1().getTips_stddev();
                     Integer totalTrips = r._2()._2()._2().getNum_trips();
-                    Iterable<Tuple2<KeyQ2, Integer>> occList = r._2()._2()._1();
-
+                    Iterable<Tuple2<KeyQ2PU, Integer>> occList = r._2()._2()._1();
                     List<Tuple2<Double, Long>> percentages = calcPercentagesList(occList, totalTrips);
-
                     return new Tuple2<>(hour, new Tuple4<>(percentages, avgTip, devTip, topPayment));
                 });
 

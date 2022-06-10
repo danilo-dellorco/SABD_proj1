@@ -1,7 +1,8 @@
 package utils;
 
 import scala.Tuple2;
-import utils.tuples.KeyQ2;
+import utils.tuples.KeyQ2PU;
+import utils.tuples.KeyQ2Pay;
 import utils.tuples.KeyQ3;
 import utils.tuples.ValQ3;
 
@@ -28,34 +29,34 @@ public class Tools {
      * @param list
      * @return
      */
-    public static Tuple2<Long, Integer> getMostFrequentPayment(Iterable<Tuple2<Tuple2<String, Long>, Integer>> list) {
-        Iterator<Tuple2<Tuple2<String, Long>, Integer>> iterator = list.iterator();
+    public static Long getMostFrequentPayment(Iterable<Tuple2<KeyQ2Pay, Integer>> list) {
+        Iterator<Tuple2<KeyQ2Pay, Integer>> iterator = list.iterator();
 
-        Tuple2<String, Long> max = null;
+        KeyQ2Pay max = null;
         Integer maxVal = 0;
 
         while (iterator.hasNext()) {
-            Tuple2<Tuple2<String, Long>, Integer> element = iterator.next();
-            Tuple2<String, Long> actual = element._1();
+            Tuple2<KeyQ2Pay, Integer> element = iterator.next();
+            KeyQ2Pay actual = element._1();
             Integer actualVal = element._2();
             if (actualVal >= maxVal) {
                 maxVal = actualVal;
                 max = actual;
             }
         }
-        return new Tuple2<>(max._2(), maxVal);
+        return max.getPayment();
     }
 
-    public static List<Tuple2<Double,Long>> calcPercentagesList(Iterable<Tuple2<KeyQ2, Integer>> list, Integer t) {
+    public static List<Tuple2<Double,Long>> calcPercentagesList(Iterable<Tuple2<KeyQ2PU, Integer>> list, Integer t) {
         Double total = new Double(t);
-        Iterator<Tuple2<KeyQ2, Integer>> iterator = list.iterator();
+        Iterator<Tuple2<KeyQ2PU, Integer>> iterator = list.iterator();
         List<Tuple2<Double,Long>> percentages = new ArrayList<>();
 
         Tuple2<String, Long> max = null;
         Integer maxVal = 0;
 
         while (iterator.hasNext()) {
-            Tuple2<KeyQ2, Integer> element = iterator.next();
+            Tuple2<KeyQ2PU, Integer> element = iterator.next();
             Long zone = element._1().getSource();
             Integer value = element._2();
             Double perc = value/total;

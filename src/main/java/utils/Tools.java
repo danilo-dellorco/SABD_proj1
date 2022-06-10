@@ -6,6 +6,7 @@ import utils.tuples.KeyQ2Pay;
 import utils.tuples.KeyQ3;
 import utils.tuples.ValQ3;
 
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.text.CharacterIterator;
 import java.text.SimpleDateFormat;
@@ -22,7 +23,6 @@ public class Tools {
         Scanner scanner = new Scanner(System.in);
         scanner.nextLine();
     }
-
     /**
      * Ritorna la tupla (method,occurrences) relativa al metodo di pagamento più usata nella fascia oraria
      *

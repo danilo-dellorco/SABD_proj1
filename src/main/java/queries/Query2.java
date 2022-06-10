@@ -19,6 +19,7 @@ import utils.Payments;
 import utils.Tools;
 import utils.ValQ2;
 
+import java.sql.Timestamp;
 import java.util.List;
 
 import static utils.Tools.*;
@@ -28,7 +29,8 @@ public class Query2 extends Query {
         super(spark, dataset, collection, name);
     }
 
-    public void execute() {
+    public long execute() {
+        Timestamp start = getTimestamp();
         // RDD:=[time_slot,statistics]
         JavaPairRDD<Integer, ValQ2> aggregated = dataset.mapToPair(r ->
                     new Tuple2<>(Tools.getHour(r.getTimestamp(0).toString()),
@@ -151,5 +153,7 @@ public class Query2 extends Query {
             collection.insertOne(document);
         }
 
+        Timestamp end = getTimestamp();
+        return end.getTime() - start.getTime();
     }
 }

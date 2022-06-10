@@ -24,7 +24,7 @@ public abstract class Query {
         return name;
     }
 
-    public abstract void execute();
+    public abstract long execute();
 
     public void printResults() {
         System.out.println("\n—————————————————————————————————————————————————————————— "+this.getName()+" ——————————————————————————————————————————————————————————");
@@ -33,5 +33,13 @@ public abstract class Query {
             System.out.println(doc);
         }
         System.out.println("—————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————\n");
+    }
+
+    public long writeResultsOnMongo() {
+        return 0;
+    }
+
+    public long writeResultsOnCSV() {
+        return 0;
     }
 }

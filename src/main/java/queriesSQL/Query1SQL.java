@@ -1,6 +1,5 @@
 package queriesSQL;
 
-import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
@@ -20,6 +19,8 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.TimeZone;
+
+import static utils.Tools.getTimestamp;
 
 public class Query1SQL extends Query {
     Dataset<Row> results;
@@ -53,7 +54,8 @@ public class Query1SQL extends Query {
     }
 
     @Override
-    public void execute() {
+    public long execute() {
+        Timestamp start = getTimestamp();
         Dataset<Row> data = createSchemaFromRDD(spark, dataset);
         data.createOrReplaceTempView("taxi_row");
         Dataset<Row> values = spark.sql("SELECT month(tpep_dropoff_datatime) AS month, " +
@@ -80,6 +82,9 @@ public class Query1SQL extends Query {
         }
 //        METODO ALTERNATIVO utilizzando metodi sql integrati di spark
 //        values.withColumn("mean", values.col("tips").divide((values.col("total").minus(values.col("tolls"))))).show();
+
+        Timestamp end = getTimestamp();
+        return end.getTime() - start.getTime();
     }
 
     @Override

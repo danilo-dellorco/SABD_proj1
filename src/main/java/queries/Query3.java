@@ -19,7 +19,10 @@ import scala.Tuple4;
 import utils.ValQ3;
 import utils.Zone;
 
+import java.sql.Timestamp;
 import java.util.List;
+
+import static utils.Tools.getTimestamp;
 
 
 public class Query3 extends Query {
@@ -30,7 +33,8 @@ public class Query3 extends Query {
 
 
     @Override
-    public void execute() {
+    public long execute() {
+        Timestamp start = getTimestamp();
         // RDD:=[location_id,statistics]
         JavaPairRDD<Long, ValQ3> aggregated = dataset.mapToPair(
                 r -> new Tuple2<>(r.getLong(1),
@@ -125,5 +129,8 @@ public class Query3 extends Query {
             collection.insertOne(document);
 
         }
+
+        Timestamp end = getTimestamp();
+        return end.getTime() - start.getTime();
     }
 }

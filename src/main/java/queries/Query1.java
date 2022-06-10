@@ -17,7 +17,10 @@ import utils.Month;
 import utils.ValQ1;
 import utils.Tools;
 
+import java.sql.Timestamp;
 import java.util.List;
+
+import static utils.Tools.getTimestamp;
 
 //TODO Ci stanno dei dati con mesi diversi da Dicembre-Gennaio-Febbraio
 
@@ -29,7 +32,8 @@ public class Query1 extends Query {
     }
 
     @Override
-    public void execute() {
+    public long execute() {
+        Timestamp start = getTimestamp();
         // RDD:=[month,values]
         JavaPairRDD<Integer, ValQ1> taxiRows = dataset.mapToPair(
                 r -> {
@@ -77,5 +81,7 @@ public class Query1 extends Query {
 
             collection.insertOne(document);
         }
+        Timestamp end = getTimestamp();
+        return end.getTime() - start.getTime();
     }
 }

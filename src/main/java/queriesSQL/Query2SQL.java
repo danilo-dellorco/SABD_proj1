@@ -1,6 +1,5 @@
 package queriesSQL;
 
-import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
@@ -15,13 +14,14 @@ import org.bson.Document;
 import queries.Query;
 import utils.Payments;
 
-import javax.xml.crypto.Data;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.TimeZone;
+
+import static utils.Tools.getTimestamp;
 
 public class Query2SQL extends Query {
     Dataset<Row> results;
@@ -55,7 +55,8 @@ public class Query2SQL extends Query {
     }
 
     @Override
-    public void execute() {
+    public long execute() {
+        Timestamp start = getTimestamp();
         Dataset<Row> data = createSchemaFromRDD(spark, dataset);
         data.show();
         data.createOrReplaceTempView("trip_infos");
@@ -92,6 +93,9 @@ public class Query2SQL extends Query {
 
             collection.insertOne(doc);
         }
+
+        Timestamp end = getTimestamp();
+        return end.getTime() - start.getTime();
     }
 
     @Override

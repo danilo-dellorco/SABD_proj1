@@ -74,12 +74,12 @@ public class Main {
         }
 
         printSystemSpecs();
-        Timestamp start = getTimestamp();
-        query.execute();
-        Timestamp end = getTimestamp();
-        long exec = end.getTime() - start.getTime();
+        long queryExecTime = query.execute();
+        long mongoSaveTime = query.writeResultsOnMongo();
+        long csvSaveTime = query.writeResultsOnCSV();
         query.printResults();
-        System.out.println(String.format("%s execution time: %s", query.getName(), toMinutes(exec)));
+        System.out.println(String.format("%s execution time: %s", query.getName(), toMinutes(queryExecTime)));
+        System.out.println(String.format("%s save mongo and csv time: %s", toMinutes(mongoSaveTime), toMinutes(csvSaveTime)));
         promptEnterKey();
     }
 

@@ -1,6 +1,7 @@
 package queriesSQL;
 
 import com.mongodb.client.MongoCollection;
+import com.univocity.parsers.csv.CsvWriter;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.sql.Dataset;
@@ -16,12 +17,15 @@ import queries.Query;
 import utils.Config;
 import utils.Zone;
 
+import java.io.FileWriter;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.TimeZone;
+
+import static utils.Tools.getTimestamp;
 
 public class Query3SQL extends Query {
     Dataset<Row> results;
@@ -55,7 +59,8 @@ public class Query3SQL extends Query {
     }
 
     @Override
-    public void execute() {
+    public long execute() {
+        Timestamp start = getTimestamp();
         Dataset<Row> data = createSchemaFromRDD(spark, dataset);
         data.createOrReplaceTempView("trip_infos");
 
@@ -84,11 +89,23 @@ public class Query3SQL extends Query {
                 "ELEMENT_AT(stddev, 1) AS avg_stddev_D01, ELEMENT_AT(stddev, 2) AS avg_stddev_D02, ELEMENT_AT(stddev, 3) AS avg_stddev_D03, ELEMENT_AT(stddev, 4) AS avg_stddev_D04, ELEMENT_AT(stddev, 5) AS avg_stddev_D05 " +
                 "FROM merged_days");
 
-        results.coalesce(1).write().mode("overwrite").option("header", "true")
-                .csv(Config.HDFS_URL+"/Q3SQL");
-        /**
-         * Salvataggio dei risultati su mongodb
-         */
+        //results.coalesce(1).write().mode("overwrite").option("header", "true")
+        //        .csv(Config.HDFS_URL+"/Q3SQL");
+
+        Timestamp end = getTimestamp();
+        return end.getTime() - start.getTime();
+    }
+
+    @Override
+    public void printResults() {
+        System.out.println("\n———————————————————————————————————————————————————————— "+this.getName()+" ————————————————————————————————————————————————————————");
+        results.show();
+        System.out.print("—————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————\n");
+    }
+
+    @Override
+    public long writeResultsOnMongo() {
+        Timestamp start = getTimestamp();
 
         List<Row> resultsList = results.collectAsList();
         for (Row r : resultsList) {
@@ -116,13 +133,59 @@ public class Query3SQL extends Query {
             doc.append("avg_stddev_D05", r.getDouble(20));
             collection.insertOne(doc);
         }
+
+        Timestamp end = getTimestamp();
+        return end.getTime() - start.getTime();
     }
 
     @Override
-    public void printResults() {
-        System.out.println("\n———————————————————————————————————————————————————————— "+this.getName()+" ————————————————————————————————————————————————————————");
-        results.show();
-        System.out.print("—————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————\n");
+    public long writeResultsOnCSV() {
+        Timestamp start = getTimestamp();
+        String outputName = "Results/q3sql-res.csv";
+
+        try (FileWriter fileWriter = new FileWriter(outputName)) {
+            StringBuilder outputBuilder = new StringBuilder("YYYY-MM-DD,D01,D02,D03,D04,D05,");
+            outputBuilder.append("avg_pax_D01,avg_pax_D02,avg_pax_D03,avg_pax_D04,avg_pax_D05,");
+            outputBuilder.append("avg_fare_D01,avg_fare_D02,avg_fare_D03,avg_fare_D04,avg_fare_D05,");
+            outputBuilder.append("avg_stddev_D01,avg_stddev_D02,avg_stddev_D03,avg_stddev_D04,avg_stddev_D05\n");
+            fileWriter.append(outputBuilder.toString());
+            outputBuilder.setLength(0);
+            for (Row row : results.collectAsList()) {
+                String timestamp = row.getDate(0).toString();
+                String D01 = row.getString(1);
+                String D02 = row.getString(2);
+                String D03 = row.getString(3);
+                String D04 = row.getString(4);
+                String D05 = row.getString(5);
+                Double avg_pax_D01 = row.getDouble(6);
+                Double avg_pax_D02 = row.getDouble(7);
+                Double avg_pax_D03 = row.getDouble(8);
+                Double avg_pax_D04 = row.getDouble(9);
+                Double avg_pax_D05 = row.getDouble(10);
+                Double avg_fare_D01 = row.getDouble(11);
+                Double avg_fare_D02 = row.getDouble(12);
+                Double avg_fare_D03 = row.getDouble(13);
+                Double avg_fare_D04 = row.getDouble(14);
+                Double avg_fare_D05 = row.getDouble(15);
+                Double avg_stddev_D01 = row.getDouble(16);
+                Double avg_stddev_D02 = row.getDouble(17);
+                Double avg_stddev_D03 = row.getDouble(18);
+                Double avg_stddev_D04 = row.getDouble(19);
+                Double avg_stddev_D05 = row.getDouble(20);
+                outputBuilder.append(String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
+                        timestamp, D01, D02, D03, D04, D05,
+                        avg_pax_D01, avg_pax_D02, avg_pax_D03, avg_pax_D04, avg_pax_D05,
+                        avg_fare_D01, avg_fare_D02, avg_fare_D03, avg_fare_D04, avg_fare_D05,
+                        avg_stddev_D01, avg_stddev_D02, avg_stddev_D03, avg_stddev_D04, avg_stddev_D05));
+                fileWriter.append(outputBuilder.toString());
+                outputBuilder.setLength(0);
+            }
+        } catch (Exception e) {
+            System.out.println("Results CSV Error: " + e);
+        }
+
+        Timestamp end = getTimestamp();
+        return end.getTime() - start.getTime();
     }
 }
 

@@ -80,7 +80,7 @@ public class Query3SQL extends Query {
         // results with zones_id casted to string because they will host the zone string name instead of the id
         results = spark.sql("SELECT day, setZones(CAST(ELEMENT_AT(dest, 1) AS String)) AS D01, setZones(CAST(ELEMENT_AT(dest, 2) AS String)) AS D02, setZones(CAST(ELEMENT_AT(dest, 3) AS String)) AS D03, setZones(CAST(ELEMENT_AT(dest, 4) AS String)) AS D04, setZones(CAST(ELEMENT_AT(dest, 5) AS String)) AS D05, " +
                 "ELEMENT_AT(pass, 1) AS avg_pax_D01, ELEMENT_AT(pass, 2) AS avg_pax_D02, ELEMENT_AT(pass, 3) AS avg_pax_D03, ELEMENT_AT(pass, 4) AS avg_pax_D04, ELEMENT_AT(pass, 5) AS avg_pax_D05, " +
-                "ELEMENT_AT(fare, 1) AS avg_fare_D01, ELEMENT_AT(pass, 2) AS avg_fare_D02, ELEMENT_AT(pass, 3) AS avg_fare_D03, ELEMENT_AT(pass, 4) AS avg_fare_D04, ELEMENT_AT(pass, 5) AS avg_fare_D05, " +
+                "ELEMENT_AT(fare, 1) AS avg_fare_D01, ELEMENT_AT(fare, 2) AS avg_fare_D02, ELEMENT_AT(fare, 3) AS avg_fare_D03, ELEMENT_AT(fare, 4) AS avg_fare_D04, ELEMENT_AT(fare, 5) AS avg_fare_D05, " +
                 "ELEMENT_AT(stddev, 1) AS avg_stddev_D01, ELEMENT_AT(stddev, 2) AS avg_stddev_D02, ELEMENT_AT(stddev, 3) AS avg_stddev_D03, ELEMENT_AT(stddev, 4) AS avg_stddev_D04, ELEMENT_AT(stddev, 5) AS avg_stddev_D05 " +
                 "FROM merged_days");
 

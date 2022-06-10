@@ -15,7 +15,7 @@ import org.apache.spark.sql.types.StructType;
 import org.bson.Document;
 import queries.Query;
 import utils.Config;
-import utils.Zone;
+import utils.maps.Zone;
 
 import java.io.FileWriter;
 import java.sql.Timestamp;
@@ -141,13 +141,14 @@ public class Query3SQL extends Query {
     @Override
     public long writeResultsOnCSV() {
         Timestamp start = getTimestamp();
-        String outputName = "Results/q3sql-res.csv";
+        String outputName = "Results/query3_sql.csv";
 
         try (FileWriter fileWriter = new FileWriter(outputName)) {
-            StringBuilder outputBuilder = new StringBuilder("YYYY-MM-DD,D01,D02,D03,D04,D05,");
-            outputBuilder.append("avg_pax_D01,avg_pax_D02,avg_pax_D03,avg_pax_D04,avg_pax_D05,");
-            outputBuilder.append("avg_fare_D01,avg_fare_D02,avg_fare_D03,avg_fare_D04,avg_fare_D05,");
-            outputBuilder.append("avg_stddev_D01,avg_stddev_D02,avg_stddev_D03,avg_stddev_D04,avg_stddev_D05\n");
+            StringBuilder outputBuilder = new StringBuilder("YYYY-MM-DD;");
+            outputBuilder.append("D01;D02;D03;D04;D05;" +
+                    "avg_pax_D01;avg_pax_D02;avg_pax_D03;avg_pax_D04;avg_pax_D05;" +
+                    "avg_fare_D01;avg_fare_D02;avg_fare_D03;avg_fare_D04;avg_fare_D05;" +
+                    "avg_stddev_D01;avg_stddev_D02;avg_stddev_D03;avg_stddev_D04;avg_stddev_D05\n");
             fileWriter.append(outputBuilder.toString());
             outputBuilder.setLength(0);
             for (Row row : results.collectAsList()) {
@@ -172,7 +173,7 @@ public class Query3SQL extends Query {
                 Double avg_stddev_D03 = row.getDouble(18);
                 Double avg_stddev_D04 = row.getDouble(19);
                 Double avg_stddev_D05 = row.getDouble(20);
-                outputBuilder.append(String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
+                outputBuilder.append(String.format("%s;%s;%s;%s;%s;%s;%f;%f;%f;%f;%f;%f;%f;%f;%f;%f;%f;%f;%f;%f;%f\n",
                         timestamp, D01, D02, D03, D04, D05,
                         avg_pax_D01, avg_pax_D02, avg_pax_D03, avg_pax_D04, avg_pax_D05,
                         avg_fare_D01, avg_fare_D02, avg_fare_D03, avg_fare_D04, avg_fare_D05,

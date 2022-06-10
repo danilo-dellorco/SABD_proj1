@@ -177,8 +177,8 @@ public class Query3 extends Query{
             StringBuilder outputBuilder = new StringBuilder(
                     "YYYY-MM-DD;" +
                     "DO1;DO2;DO3;DO4;DO5;" +
-                    "avg pax DO1;avg pax DO2;avg pax DO3;avg pax DO4;avg pax DO5" +
-                    "avg fare DO1;avg fare DO2;avg fare DO3;avg fare DO4;avg fare DO5" +
+                    "avg pax DO1;avg pax DO2;avg pax DO3;avg pax DO4;avg pax DO5;" +
+                    "avg fare DO1;avg fare DO2;avg fare DO3;avg fare DO4;avg fare DO5;" +
                     "stddev fare DO1;stddev fare DO2;stddev fare DO3;stddev fare DO4;stddev fare DO5\n");
 
             for (Tuple2<String, List<Tuple2<Long, ValQ3>>> r : results) {

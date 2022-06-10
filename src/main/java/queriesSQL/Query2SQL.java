@@ -70,9 +70,8 @@ public class Query2SQL extends Query {
                 "JOIN " +
                 "(SELECT date_format(tpep_pickup_datatime, 'y-MM-dd HH') as timestamp_2, count(*) AS total_trip_hour from trip_infos group by timestamp_2)" +
                 "ON timestamp = timestamp_2 ORDER BY timestamp ASC");
-//        scheduledTrips.show();
+        scheduledTrips.show(10000);
         scheduledTrips.createOrReplaceTempView("scheduled_trips");
-
 
         Dataset<Row> groupedTrips = spark.sql("SELECT timestamp, collect_list(concat_ws(':', zone, zone_perc)) as zone_percs FROM scheduled_trips GROUP BY timestamp");
         groupedTrips.createOrReplaceTempView("grouped_trips");

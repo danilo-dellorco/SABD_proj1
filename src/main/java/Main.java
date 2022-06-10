@@ -122,7 +122,7 @@ public class Main {
         MongoCollection collection2_SQL = db.getCollection(Config.MONGO_Q2SQL);
         MongoCollection collection3_SQL = db.getCollection(Config.MONGO_Q3SQL);
 
-        collections = Arrays.asList(collection1,collection2,collection3, collection1_SQL, collection2_SQL);
+        collections = Arrays.asList(collection1,collection2,collection3, collection1_SQL, collection2_SQL, collection3_SQL);
         Timestamp end = getTimestamp();
         return end.getTime()-start.getTime();
     }

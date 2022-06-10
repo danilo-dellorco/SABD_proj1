@@ -7,8 +7,6 @@
  * 12022-01-01-00, 0.21, 0, ..., 0.24, 18.3, 6.31, 1
  */
 
-//TODO modificato tutto per avere orario in stringa secondo il nuovo formato. Da rifare tutta ma penso servirà
-
 package queries;
 
 import com.mongodb.client.MongoCollection;

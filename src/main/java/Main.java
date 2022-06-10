@@ -13,11 +13,9 @@ import queriesSQL.Query1SQL;
 import queriesSQL.Query2SQL;
 import queriesSQL.Query3SQL;
 import utils.Config;
-import utils.Tools;
 
 import java.io.IOException;
 import java.sql.Timestamp;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -26,7 +24,7 @@ import static utils.Tools.*;
 
 public class Main {
     public static SparkSession spark = null;
-    public static JavaRDD<Row> javaRDD = null;
+    public static JavaRDD<Row> datasetRDD = null;
     public static List<MongoCollection> collections = null;
     public static Query query;
 
@@ -45,13 +43,13 @@ public class Main {
         long mongoSetupTime = initMongo();
         turnOffLogger();
 
-        Query1 q1 = new Query1(spark, yellowRDD,collections.get(0), "QUERY 1");
-        Query2 q2 = new Query2(spark, yellowRDD,collections.get(1), "QUERY 2");
-        Query3 q3 = new Query3(spark, yellowRDD,collections.get(2), "QUERY 3");
+        Query1 q1 = new Query1(spark, datasetRDD,collections.get(0), "QUERY 1");
+        Query2 q2 = new Query2(spark, datasetRDD,collections.get(1), "QUERY 2");
+        Query3 q3 = new Query3(spark, datasetRDD,collections.get(2), "QUERY 3");
 
-        Query1SQL q1SQL = new Query1SQL(spark, javaRDD, collections.get(3), "QUERY 1 SQL");
-        Query2SQL q2SQL = new Query2SQL(spark, javaRDD, collections.get(4), "QUERY 2 SQL");
-        Query3SQL q3SQL = new Query3SQL(spark, javaRDD, collections.get(5), "QUERY 3 SQL");
+        Query1SQL q1SQL = new Query1SQL(spark, datasetRDD, collections.get(3), "QUERY 1 SQL");
+        Query2SQL q2SQL = new Query2SQL(spark, datasetRDD, collections.get(4), "QUERY 2 SQL");
+        Query3SQL q3SQL = new Query3SQL(spark, datasetRDD, collections.get(5), "QUERY 3 SQL");
 
         switch (args[0]) {
             case ("Q1"):
@@ -124,7 +122,7 @@ public class Main {
         MongoCollection collection2_SQL = db.getCollection(Config.MONGO_Q2SQL);
         MongoCollection collection3_SQL = db.getCollection(Config.MONGO_Q3SQL);
 
-        collections = Arrays.asList(collection1,collection2,collection3,collection4, collection1_SQL, collection2_SQL);
+        collections = Arrays.asList(collection1,collection2,collection3, collection1_SQL, collection2_SQL);
         Timestamp end = getTimestamp();
         return end.getTime()-start.getTime();
     }
@@ -151,10 +149,10 @@ public class Main {
     public static long loadDataset() {
         Timestamp start = getTimestamp();
         if (Config.DATA_MODE.equals("UNLIMITED")) {
-            javaRDD = spark.read().option("header", "false").parquet(dataset_path).toJavaRDD();
+            datasetRDD = spark.read().option("header", "false").parquet(dataset_path).toJavaRDD();
         }
         else {
-            javaRDD = spark.read().option("header", "false").parquet(dataset_path).limit(Config.LIMIT_NUM).toJavaRDD();
+            datasetRDD = spark.read().option("header", "false").parquet(dataset_path).limit(Config.LIMIT_NUM).toJavaRDD();
         }
         Timestamp end = getTimestamp();
         return end.getTime()-start.getTime();

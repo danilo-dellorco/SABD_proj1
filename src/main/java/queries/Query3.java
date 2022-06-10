@@ -37,10 +37,9 @@ import static utils.Tools.getTopFiveDestinations;
 
 //TODO sistemare commenti
 
-public class Query3 extends Query{
-    List<Tuple2<String, List<Tuple2<Long, ValQ3>>>> results;
 
 public class Query3 extends Query {
+    List<Tuple2<String, List<Tuple2<Long, ValQ3>>>> results;
 
     public Query3(SparkSession spark, JavaRDD<Row> dataset, MongoCollection collection, String name) {
         super(spark, dataset, collection, name);

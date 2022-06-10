@@ -79,7 +79,7 @@ public class Main {
         long csvSaveTime = query.writeResultsOnCSV();
 
         query.printResults();
-        printResultAnalysis(query.getName(),sparkSetupTime, dataLoadTime, mongoSetupTime, queryExecTime,mongoSaveTime,csvSaveTime);
+//        printResultAnalysis(query.getName(),sparkSetupTime, dataLoadTime, mongoSetupTime, queryExecTime,mongoSaveTime,csvSaveTime);
         promptEnterKey();
     }
 

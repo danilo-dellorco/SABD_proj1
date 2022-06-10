@@ -20,8 +20,10 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.bson.Document;
 import scala.Tuple2;
+import scala.Tuple4;
 import utils.maps.Payment;
 import utils.Tools;
+import utils.tuples.KeyQ2;
 import utils.tuples.ValQ2;
 
 import java.util.List;
@@ -29,6 +31,8 @@ import java.util.List;
 import static utils.Tools.*;
 
 public class Query2 extends Query{
+    List<Tuple2<String, Tuple2<Tuple2<ValQ2, Tuple2<Long, Integer>>, Iterable<Tuple2<KeyQ2, Integer>>>>> results;
+
     public Query2(SparkSession spark, JavaRDD<Row> dataset, MongoCollection collection, String name) {
         super(spark, dataset, collection, name);
     }
@@ -38,13 +42,27 @@ public class Query2 extends Query{
         // RDD:=[time_slot,statistics]
         JavaPairRDD<String, ValQ2> aggregated = dataset.mapToPair(r ->
                     new Tuple2<>(Tools.getHour(r.getTimestamp(0)),
-                    new ValQ2(r.getDouble(4), r.getLong(2),1)));
+                    new ValQ2(r.getDouble(6), r.getLong(4),1)));
+
+        JavaPairRDD<KeyQ2, Integer> zones = dataset.mapToPair(r ->
+                    new Tuple2<>(new KeyQ2(Tools.getHour(r.getTimestamp(0)),r.getLong(2)), 1));
+
+        // RDD:=[(time_slot,payment),occurrences]
+        JavaPairRDD<KeyQ2,Integer> red_zones = zones.reduceByKey((Function2<Integer, Integer, Integer>) (v1, v2) -> {
+            Integer occ = v1+ v2;
+            return occ;
+        });
+
+        JavaPairRDD<String, Iterable<Tuple2<KeyQ2, Integer>>> grouped_zones = red_zones.groupBy((Function<Tuple2<KeyQ2, Integer>, String>) r -> r._1().getHour());
+        System.out.println(grouped_zones.take(1));
+
+
+
 
 
         /**
          * Calcolo del metodo di pagamento più diffuso per ogni fascia oraria
          */
-
         // RDD:=[(time_slot,payment),1]
         JavaPairRDD<Tuple2<String, Long>,Integer> aggr_pay = aggregated.mapToPair(r ->
                 new Tuple2<>(
@@ -124,33 +142,60 @@ public class Query2 extends Query{
          * Unione dei metodi di pagamento con le statistiche calcolate
          */
         // RDD:=[time_slot,(statistics,(top_payment,occurrences)))]
-        JavaPairRDD<String, Tuple2<ValQ2, Tuple2<Long, Integer>>> final_joined = deviation
+        JavaPairRDD<String, Tuple2<Tuple2<ValQ2, Tuple2<Long, Integer>>, Iterable<Tuple2<KeyQ2, Integer>>>> final_joined = deviation
                 .join(top_payments)
-                .sortByKey();
+                .join(grouped_zones);
 
-        List<Tuple2<String, Tuple2<ValQ2, Tuple2<Long, Integer>>>> result = final_joined.collect();
+//        JavaPairRDD<String, Tuple4<List<Double>,Double,Double,Long>> results_rdd = final_joined.mapToPair(
+//                r -> {
+//                    String hour = r._1();
+//                    long topPayment = r._2()._1()._2._1();
+//                    double avgTip = r._2()._1()._1().getTips();
+//                    double devTip = r._2()._1()._1().getTips_stddev();
+//                    Integer total
+//
+//
+//
+//
+//
+//                    Double tips_mean = r._2()._2().getTips();
+//                    Double tip_val = r._2()._1().getTips();
+//                    Double tips_dev = Math.pow((tip_val - tips_mean), 2);
+//                    r._2()._2().setTips_stddev(tips_dev);
+//
+//                    return new Tuple2<>(r._1(), r._2()._2());
+//                });
 
-        /**
-         * Salvataggio dei risultati su mongodb
-         */
-        for (Tuple2<String, Tuple2<ValQ2, Tuple2<Long, Integer>>> r:result) {
-            String slot = r._1();
-            Double mean = r._2()._1().getTips();
-            Double stdev = r._2()._1().getTips_stddev();
-            Integer payment_id = Math.toIntExact(r._2()._2()._1());
-            String payment_name = Payment.staticMap.get(payment_id);
-            Integer payment_occ = r._2()._2()._2();
-
-            Document document = new Document();
-            document.append("hour_slot", slot);
-            document.append("tips_mean", mean);
-            document.append("tips_stdev", stdev);
-            document.append("top_payment", payment_id);
-            document.append("payment_name", payment_name);
-            document.append("payment_occ", payment_occ);
-
-            collection.insertOne(document);
-        }
+        results = final_joined.take(1);
+        System.out.println(results);
         return 0;
+    }
+
+    @Override
+    public long writeResultsOnMongo() {
+//        for (Tuple2<String, Tuple2<Tuple2<ValQ2, Tuple2<Long, Integer>>, Iterable<Tuple2<KeyQ2, Integer>>>> r : results) {
+//            String slot = r._1();
+//            Double mean = r._2()._1()._1().getTips();
+//            Double stdev = r._2()._1()._1().getTips_stddev();
+//            Integer payment_id = Math.toIntExact(r._2()._2());
+//            String payment_name = Payment.staticMap.get(payment_id);
+//            Integer payment_occ = r._2()._2()._2();
+//
+//            Document document = new Document();
+//            document.append("hour_slot", slot);
+//            document.append("tips_mean", mean);
+//            document.append("tips_stdev", stdev);
+//            document.append("top_payment", payment_id);
+//            document.append("payment_name", payment_name);
+//            document.append("payment_occ", payment_occ);
+//
+//            collection.insertOne(document);
+//        }
+        return 0;
+    }
+
+    @Override
+    public long writeResultsOnCSV() {
+        return super.writeResultsOnCSV();
     }
 }

@@ -80,10 +80,10 @@ public class Query1 extends Query {
                 }
         ).sortByKey();
 
-        results = resultsRDD.collect();
         resultsRDD.saveAsTextFile(Config.HDFS_URL+"/Q1");
-
         Timestamp end = getTimestamp();
+
+        results = resultsRDD.collect();
         return end.getTime() - start.getTime();
     }
 

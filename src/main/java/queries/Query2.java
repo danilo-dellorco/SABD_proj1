@@ -171,9 +171,10 @@ public class Query2 extends Query {
                     return new Tuple2<>(hour, new Tuple4<>(percentages, avgTip, devTip, topPayment));
                 });
 
-        results = results_rdd.collect();
         results_rdd.saveAsTextFile(Config.HDFS_URL+"/Q2");
         Timestamp end = getTimestamp();
+
+        results = results_rdd.collect();
         return end.getTime() - start.getTime();
     }
 

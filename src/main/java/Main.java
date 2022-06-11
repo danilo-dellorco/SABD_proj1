@@ -28,6 +28,8 @@ public class Main {
     public static List<MongoCollection> collections = null;
     public static Query query;
 
+    public static String exec_mode;
+
     public static String jar_path;
     public static String dataset_path;
     public static String spark_url;
@@ -37,6 +39,7 @@ public class Main {
     // TODO rimuovere i sortbykey intermedi perchè sono wide transformation. Non dovrebbero avere utilità pratiche ma li usavamo solo per i print intermedi (sopratutto query2)
     // TODO vedere i DAG delle query e togliere cose inutili
     public static void main(String[] args) throws IOException, InterruptedException {
+        exec_mode = args[1];
         setExecMode();
         long sparkSetupTime = initSpark();
         long dataLoadTime = loadDataset();
@@ -71,10 +74,11 @@ public class Main {
                 query=q3SQL;
                 break;
         }
+
         long queryExecTime = query.execute();
         long mongoSaveTime = query.writeResultsOnMongo();
 
-        if (Config.EXEC_MODE.equals("LOCAL")) {
+        if (exec_mode.equals("LOCAL")) {
             long csvSaveTime = query.writeResultsOnCSV();
             printResultAnalysis(query.getName(), sparkSetupTime, dataLoadTime, mongoSetupTime, queryExecTime, mongoSaveTime, csvSaveTime);
             promptEnterKey();
@@ -166,7 +170,7 @@ public class Main {
      * Configura i path per l'esecuzione locale oppure su container docker.
      */
     public static void setExecMode() {
-        if (Config.EXEC_MODE.equals("LOCAL")) {
+        if (exec_mode.equals("LOCAL")) {
             jar_path = Config.LOCAL_JAR_PATH;
             dataset_path = Config.LOCAL_DATASET_PATH;
             spark_url = Config.LOCAL_SPARK_URL;

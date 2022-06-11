@@ -1,7 +1,6 @@
 package utils;
 
 public class Config {
-    public static final String EXEC_MODE = "DOCKER"; //{LOCAL,DOCKER}
     public static final String DATA_MODE = "UNLIMITED"; //{LIMITED,UNLIMITED}
     public static final int LIMIT_NUM = 10000;
 

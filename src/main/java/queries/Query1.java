@@ -80,7 +80,6 @@ public class Query1 extends Query {
                 }
         ).sortByKey();
 
-        //TODO overwrite mode saveastextfile
         results = resultsRDD.collect();
         resultsRDD.saveAsTextFile(Config.HDFS_URL+"/Q1");
 

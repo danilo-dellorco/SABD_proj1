@@ -136,7 +136,8 @@ public class Main {
      */
     public static long initSpark() {
         Timestamp start = getTimestamp();
-        SparkConf conf = new SparkConf().setJars(new String[]{jar_path});
+        SparkConf conf = new SparkConf().setJars(new String[]{jar_path})
+                .set("spark.hadoop.validateOutputSpecs", "False");
         spark = SparkSession
                 .builder()
                 .config(conf)

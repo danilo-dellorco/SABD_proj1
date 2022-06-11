@@ -21,6 +21,7 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.bson.Document;
 import scala.Tuple2;
+import utils.Config;
 import utils.DateComparator;
 import utils.tuples.KeyQ3;
 import utils.Tools;
@@ -125,9 +126,11 @@ public class Query3 extends Query {
                 new Tuple2<>(
                         r._1(),
                         getTopFiveDestinations(r._2())
-                ));
+                )).sortByKey(new DateComparator());
 
-        results = top_destinations.sortByKey(new DateComparator()).collect();
+
+        results = top_destinations.collect();
+        top_destinations.saveAsTextFile(Config.HDFS_URL+"/Q3");
         Timestamp end = getTimestamp();
         return end.getTime()-start.getTime();
     }

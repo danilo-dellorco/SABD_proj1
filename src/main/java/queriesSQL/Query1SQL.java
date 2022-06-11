@@ -85,7 +85,6 @@ public class Query1SQL extends Query {
             doc.append("month_id", r.getString(0));
             doc.append("tips_percentage", Double.valueOf((int) r.getDouble(1)));
             doc.append("trips_number", r.getLong(2));
-
             collection.insertOne(doc);
         }
         Timestamp end = getTimestamp();

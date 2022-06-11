@@ -19,6 +19,7 @@ import org.apache.spark.sql.SparkSession;
 import org.bson.Document;
 import scala.Tuple2;
 import scala.Tuple4;
+import utils.Config;
 import utils.DateComparator;
 import utils.Tools;
 import utils.tuples.KeyQ2PU;
@@ -171,6 +172,7 @@ public class Query2 extends Query {
                 });
 
         results = results_rdd.collect();
+        results_rdd.saveAsTextFile(Config.HDFS_URL+"/Q2");
         Timestamp end = getTimestamp();
         return end.getTime() - start.getTime();
     }

@@ -14,12 +14,10 @@ import org.bson.Document;
 import queries.Query;
 import utils.Config;
 
+import java.io.FileWriter;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
-import java.util.TimeZone;
+import java.util.*;
 
 import static utils.Tools.getTimestamp;
 
@@ -96,7 +94,29 @@ public class Query1SQL extends Query {
 
     @Override
     public long writeResultsOnCSV() {
-        return super.writeResultsOnCSV();
+        Timestamp start = getTimestamp();
+        String outputName = "Results/query1_sql.csv";
+
+        try (FileWriter fileWriter = new FileWriter(outputName)) {
+            StringBuilder outputBuilder = new StringBuilder("YYYY-MM;tip_percentage;trips_number;\n");
+            fileWriter.append(outputBuilder.toString());
+            for (Row row : results.collectAsList()) {
+                outputBuilder.setLength(0);                                     // Empty builder
+
+                String timestamp = row.getString(0);
+                Double tip_percentage = row.getDouble(1);
+                Long trips_number = row.getLong(2);
+                System.out.println(timestamp);
+                System.out.println(trips_number);
+                System.out.println(tip_percentage);
+                outputBuilder.append(String.format("%s;%f;%d;\n", timestamp, tip_percentage, trips_number));
+                fileWriter.append(outputBuilder.toString());
+            }
+        } catch (Exception e) {
+            System.out.println("Results CSV Error: " + e);
+        }
+        Timestamp end = getTimestamp();
+        return end.getTime() - start.getTime();
     }
 
     @Override

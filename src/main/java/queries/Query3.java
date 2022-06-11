@@ -128,10 +128,9 @@ public class Query3 extends Query {
                         getTopFiveDestinations(r._2())
                 )).sortByKey(new DateComparator());
 
-
-        results = top_destinations.collect();
         top_destinations.saveAsTextFile(Config.Q3_HDFS_OUT);
         Timestamp end = getTimestamp();
+        results = top_destinations.collect();
         return end.getTime()-start.getTime();
     }
 

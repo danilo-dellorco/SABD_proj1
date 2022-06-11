@@ -57,7 +57,6 @@ public class Query2SQL extends Query {
     public long execute() {
         Timestamp start = getTimestamp();
         Dataset<Row> data = createSchemaFromRDD(spark, dataset);
-        data.show();
         data.createOrReplaceTempView("trip_infos");
 
 

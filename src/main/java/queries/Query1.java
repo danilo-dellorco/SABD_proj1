@@ -4,7 +4,7 @@
  * e l’importo dei pedaggi (Tolls amount) ed includere soltanto i pagamenti effettuati con carta di
  * credito. Nell’output indicare anche il numero totale di corse usate per calcolare il valore medio. N.B.:
  * i valori indicati negli esempi di output sono solo a titolo di esempio.
- *
+ * <p>
  * Esempio di output:
  * # header: YYYY-MM, tip percentage, trips number
  * 2021-12, 0.16, 1607185
@@ -21,6 +21,7 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.bson.Document;
 import scala.Tuple2;
+import utils.Config;
 import utils.tuples.ValQ1;
 import utils.Tools;
 
@@ -44,13 +45,13 @@ public class Query1 extends Query {
         Timestamp start = getTimestamp();
         JavaPairRDD<String, ValQ1> taxiRows = dataset.mapToPair(
                 r -> {
-                    String month = Tools.getMonth(r.getTimestamp(0));
-                    ValQ1 v1 = new ValQ1(r.getDouble(4),r.getDouble(6),r.getDouble(5), r.getLong(2),1);
+                    String month = Tools.getMonth(r.getTimestamp(1));
+                    ValQ1 v1 = new ValQ1(r.getDouble(6), r.getDouble(8), r.getDouble(7), r.getLong(4), 1);
                     return new Tuple2<>(month, v1);
                 });
 
         // Mantengo solo gli RDD con metodo di pagamento "credit card"
-        JavaPairRDD<String, ValQ1> filtered = taxiRows.filter((Function<Tuple2<String, ValQ1>, Boolean>) r -> r._2().getPayment_type()==1);
+        JavaPairRDD<String, ValQ1> filtered = taxiRows.filter((Function<Tuple2<String, ValQ1>, Boolean>) r -> r._2().getPayment_type() == 1);
 
         // RDD:=[month,values_aggr]
         JavaPairRDD<String, ValQ1> reduced = filtered.reduceByKey((Function2<ValQ1, ValQ1, ValQ1>) (v1, v2) -> {
@@ -68,7 +69,7 @@ public class Query1 extends Query {
         });
 
         // result_list:=[month,tip_percentage,trips_number]
-        results = reduced.mapToPair(
+        JavaPairRDD<String, Tuple2<Double, Integer>> resultsRDD = reduced.mapToPair(
                 r -> {
                     Double tips = r._2().getTip_amount();
                     Double tolls = r._2().getTolls_amount();
@@ -77,16 +78,18 @@ public class Query1 extends Query {
                     Integer trips = r._2().getTrips_number();
                     return new Tuple2<>(r._1(), new Tuple2<>(mean, trips));
                 }
-        ).sortByKey().collect();
+        ).sortByKey();
 
+        resultsRDD.saveAsTextFile(Config.Q1_HDFS_OUT);
         Timestamp end = getTimestamp();
+        results = resultsRDD.collect();
         return end.getTime() - start.getTime();
     }
 
     @Override
     public long writeResultsOnMongo() {
         Timestamp start = getTimestamp();
-        for (Tuple2<String, Tuple2<Double,Integer>> r : results) {
+        for (Tuple2<String, Tuple2<Double, Integer>> r : results) {
             String month = r._1();
             Double percentage = r._2()._1();
             Integer trips = r._2()._2();
@@ -99,7 +102,7 @@ public class Query1 extends Query {
             collection.insertOne(document);
         }
         Timestamp end = getTimestamp();
-        return end.getTime()-start.getTime();
+        return end.getTime() - start.getTime();
     }
 
 
@@ -110,11 +113,11 @@ public class Query1 extends Query {
 
         try (FileWriter fileWriter = new FileWriter(outputName)) {
             StringBuilder outputBuilder = new StringBuilder("YYYY-MM;tip percentage;trips number\n");
-            for (Tuple2<String, Tuple2<Double,Integer>> r : results) {
+            for (Tuple2<String, Tuple2<Double, Integer>> r : results) {
                 String month = r._1();
                 Double percentage = r._2()._1();
                 Integer trips = r._2()._2();
-                outputBuilder.append( month + ";" + percentage + ";"+ trips + "\n");
+                outputBuilder.append(month + ";" + percentage + ";" + trips + "\n");
             }
             fileWriter.append(outputBuilder.toString());
 

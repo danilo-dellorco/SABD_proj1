@@ -14,12 +14,10 @@ import org.bson.Document;
 import queries.Query;
 import utils.Config;
 
+import java.io.FileWriter;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
-import java.util.TimeZone;
+import java.util.*;
 
 import static utils.Tools.getTimestamp;
 
@@ -58,6 +56,7 @@ public class Query1SQL extends Query {
 
     @Override
     public long execute() {
+        Timestamp start = getTimestamp();
         Dataset<Row> data = createSchemaFromRDD(spark, dataset);
         data.createOrReplaceTempView("taxi_row");
 
@@ -72,20 +71,51 @@ public class Query1SQL extends Query {
                 " (tips/(total-tolls)) AS tips_percentage, trips_number FROM taxi_values ORDER BY date ASC");       //date_format(to_timestamp(string(month), 'M'), 'MMMM')  per convertire il mese in nome stringa
 
 
-        results.coalesce(1).write().mode("overwrite").option("header", "true").csv(Config.HDFS_URL+"/Q1SQL  ");
-        /**
-         * Salvataggio dei risultati su mongodb
-         */
+        results.coalesce(1).write().mode("overwrite").option("header", "true").csv(Config.Q1S_HDFS_OUT);
+        Timestamp end = getTimestamp();
+        return end.getTime() - start.getTime();
+    }
+
+    @Override
+    public long writeResultsOnMongo() {
+        Timestamp start = getTimestamp();
         List<Row> resultsList = results.collectAsList();
         for (Row r : resultsList){
             Document doc = new Document();
             doc.append("month_id", r.getString(0));
             doc.append("tips_percentage", Double.valueOf((int) r.getDouble(1)));
             doc.append("trips_number", r.getLong(2));
-
             collection.insertOne(doc);
         }
-        return 0;
+        Timestamp end = getTimestamp();
+        return end.getTime() - start.getTime();
+    }
+
+    @Override
+    public long writeResultsOnCSV() {
+        Timestamp start = getTimestamp();
+        String outputName = "Results/query1_sql.csv";
+
+        try (FileWriter fileWriter = new FileWriter(outputName)) {
+            StringBuilder outputBuilder = new StringBuilder("YYYY-MM;tip_percentage;trips_number;\n");
+            fileWriter.append(outputBuilder.toString());
+            for (Row row : results.collectAsList()) {
+                outputBuilder.setLength(0);                                     // Empty builder
+
+                String timestamp = row.getString(0);
+                Double tip_percentage = row.getDouble(1);
+                Long trips_number = row.getLong(2);
+                System.out.println(timestamp);
+                System.out.println(trips_number);
+                System.out.println(tip_percentage);
+                outputBuilder.append(String.format("%s;%f;%d;\n", timestamp, tip_percentage, trips_number));
+                fileWriter.append(outputBuilder.toString());
+            }
+        } catch (Exception e) {
+            System.out.println("Results CSV Error: " + e);
+        }
+        Timestamp end = getTimestamp();
+        return end.getTime() - start.getTime();
     }
 
     @Override

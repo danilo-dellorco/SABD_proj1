@@ -1,7 +1,6 @@
 package queriesSQL;
 
 import com.mongodb.client.MongoCollection;
-import com.univocity.parsers.csv.CsvWriter;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.sql.Dataset;
@@ -89,8 +88,7 @@ public class Query3SQL extends Query {
                 "ELEMENT_AT(stddev, 1) AS avg_stddev_D01, ELEMENT_AT(stddev, 2) AS avg_stddev_D02, ELEMENT_AT(stddev, 3) AS avg_stddev_D03, ELEMENT_AT(stddev, 4) AS avg_stddev_D04, ELEMENT_AT(stddev, 5) AS avg_stddev_D05 " +
                 "FROM merged_days");
 
-        //results.coalesce(1).write().mode("overwrite").option("header", "true")
-        //        .csv(Config.HDFS_URL+"/Q3SQL");
+        results.coalesce(1).write().mode("overwrite").option("header", "true").csv(Config.Q3S_HDFS_OUT);
 
         Timestamp end = getTimestamp();
         return end.getTime() - start.getTime();

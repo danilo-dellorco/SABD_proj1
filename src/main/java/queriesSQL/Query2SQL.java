@@ -57,7 +57,6 @@ public class Query2SQL extends Query {
     public long execute() {
         Timestamp start = getTimestamp();
         Dataset<Row> data = createSchemaFromRDD(spark, dataset);
-        data.show();
         data.createOrReplaceTempView("trip_infos");
 
 
@@ -99,7 +98,7 @@ public class Query2SQL extends Query {
                 "hourly_values JOIN most_popular_payment ON hourly_values.timestamp = most_popular_payment.timestamp) table_1 " +
                 "JOIN grouped_trips ON table_1.timestamp = grouped_trips.timestamp " +
                 "ORDER BY timestamp ASC");
-        results.drop("percs_array").coalesce(1).write().mode("overwrite").option("header", "true").csv(Config.HDFS_URL + "/Q2SQL");
+        results.drop("percs_array").coalesce(1).write().mode("overwrite").option("header", "true").csv(Config.Q2S_HDFS_OUT);
 
         Timestamp end = getTimestamp();
         return end.getTime() - start.getTime();

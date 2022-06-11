@@ -172,7 +172,7 @@ public class Query2 extends Query {
                 });
 
         results = results_rdd.collect();
-        results_rdd.saveAsTextFile(Config.HDFS_URL+"/Q2");
+        results_rdd.saveAsTextFile(Config.Q2_HDFS_OUT);
         Timestamp end = getTimestamp();
         return end.getTime() - start.getTime();
     }
@@ -194,7 +194,6 @@ public class Query2 extends Query {
             }
 
             Document document = new Document();
-            //header: YYYY-MM-DD-HH, perc PU1, perc PU2, ... perc PU265, avg tip, stddev tip, pref payment
             document.append("YYYY-MM-DD-HH", hour);
             for (int i = 0; i < 265; i++) {
                 document.append("perc_PU" + (i + 1), percentages.get(i));

@@ -81,7 +81,7 @@ public class Query1 extends Query {
         ).sortByKey();
 
         results = resultsRDD.collect();
-//        resultsRDD.saveAsTextFile(Config.HDFS_URL+"/Q1");
+        resultsRDD.saveAsTextFile(Config.Q1_HDFS_OUT);
 
         Timestamp end = getTimestamp();
         return end.getTime() - start.getTime();

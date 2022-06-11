@@ -130,7 +130,7 @@ public class Query3 extends Query {
 
 
         results = top_destinations.collect();
-        top_destinations.saveAsTextFile(Config.HDFS_URL+"/Q3");
+        top_destinations.saveAsTextFile(Config.Q3_HDFS_OUT);
         Timestamp end = getTimestamp();
         return end.getTime()-start.getTime();
     }

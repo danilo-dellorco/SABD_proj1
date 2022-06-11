@@ -38,7 +38,7 @@ public class Main {
     // TODO vedere il caching per gli RDD riacceduti
     // TODO rimuovere i sortbykey intermedi perchè sono wide transformation. Non dovrebbero avere utilità pratiche ma li usavamo solo per i print intermedi (sopratutto query2)
     // TODO vedere i DAG delle query e togliere cose inutili
-    public static void main(String[] args) throws IOException, InterruptedException {
+    public static void main(String[] args) {
         exec_mode = args[1];
         setExecMode();
         long sparkSetupTime = initSpark();

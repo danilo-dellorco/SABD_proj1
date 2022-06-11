@@ -73,11 +73,15 @@ public class Main {
         }
         long queryExecTime = query.execute();
         long mongoSaveTime = query.writeResultsOnMongo();
-        long csvSaveTime = query.writeResultsOnCSV();
 
-        query.printResults();
-        printResultAnalysis(query.getName(),sparkSetupTime, dataLoadTime, mongoSetupTime, queryExecTime,mongoSaveTime,csvSaveTime);
-        promptEnterKey();
+        if (Config.EXEC_MODE.equals("LOCAL")) {
+            long csvSaveTime = query.writeResultsOnCSV();
+            printResultAnalysis(query.getName(), sparkSetupTime, dataLoadTime, mongoSetupTime, queryExecTime, mongoSaveTime, csvSaveTime);
+            promptEnterKey();
+        }
+        else {
+            printSimpleResultAnalysis(query.getName(),sparkSetupTime, dataLoadTime, mongoSetupTime, queryExecTime, mongoSaveTime);
+        }
     }
 
     /**

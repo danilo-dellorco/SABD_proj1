@@ -58,6 +58,7 @@ public class Query1SQL extends Query {
 
     @Override
     public long execute() {
+        Timestamp start = getTimestamp();
         Dataset<Row> data = createSchemaFromRDD(spark, dataset);
         data.createOrReplaceTempView("taxi_row");
 
@@ -73,9 +74,13 @@ public class Query1SQL extends Query {
 
 
         results.coalesce(1).write().mode("overwrite").option("header", "true").csv(Config.HDFS_URL+"/Q1SQL  ");
-        /**
-         * Salvataggio dei risultati su mongodb
-         */
+        Timestamp end = getTimestamp();
+        return end.getTime() - start.getTime();
+    }
+
+    @Override
+    public long writeResultsOnMongo() {
+        Timestamp start = getTimestamp();
         List<Row> resultsList = results.collectAsList();
         for (Row r : resultsList){
             Document doc = new Document();
@@ -85,7 +90,13 @@ public class Query1SQL extends Query {
 
             collection.insertOne(doc);
         }
-        return 0;
+        Timestamp end = getTimestamp();
+        return end.getTime() - start.getTime();
+    }
+
+    @Override
+    public long writeResultsOnCSV() {
+        return super.writeResultsOnCSV();
     }
 
     @Override

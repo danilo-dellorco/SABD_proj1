@@ -44,8 +44,8 @@ public class Query1 extends Query {
         Timestamp start = getTimestamp();
         JavaPairRDD<String, ValQ1> taxiRows = dataset.mapToPair(
                 r -> {
-                    String month = Tools.getMonth(r.getTimestamp(0));
-                    ValQ1 v1 = new ValQ1(r.getDouble(4),r.getDouble(6),r.getDouble(5), r.getLong(2),1);
+                    String month = Tools.getMonth(r.getTimestamp(1));
+                    ValQ1 v1 = new ValQ1(r.getDouble(6),r.getDouble(8),r.getDouble(7), r.getLong(4),1);
                     return new Tuple2<>(month, v1);
                 });
 

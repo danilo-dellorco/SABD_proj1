@@ -71,7 +71,7 @@ public class Query1SQL extends Query {
                 " (tips/(total-tolls)) AS tips_percentage, trips_number FROM taxi_values ORDER BY date ASC");       //date_format(to_timestamp(string(month), 'M'), 'MMMM')  per convertire il mese in nome stringa
 
 
-        results.coalesce(1).write().mode("overwrite").option("header", "true").csv(Config.HDFS_URL+"/Q1SQL  ");
+        results.coalesce(1).write().mode("overwrite").option("header", "true").csv(Config.Q1S_HDFS_OUT);
         Timestamp end = getTimestamp();
         return end.getTime() - start.getTime();
     }

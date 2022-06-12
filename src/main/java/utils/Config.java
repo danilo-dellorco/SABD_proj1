@@ -27,10 +27,10 @@ public class Config {
     public static final String MONGO_Q2SQL = "q2sql_res";
     public static final String MONGO_Q3SQL = "q3sql_res";
 
-    public static final String Q1_HDFS_OUT = HDFS_URL + "Results/Q1";
-    public static final String Q2_HDFS_OUT = HDFS_URL + "Results/Q2";
-    public static final String Q3_HDFS_OUT = HDFS_URL + "Results/Q3";
-    public static final String Q1S_HDFS_OUT = HDFS_URL + "Results/Q1SQL";
-    public static final String Q2S_HDFS_OUT = HDFS_URL + "Results/Q2SQL";
-    public static final String Q3S_HDFS_OUT = HDFS_URL + "Results/Q3SQL";
+    public static final String Q1_HDFS_OUT = HDFS_URL + "/Results/Q1";
+    public static final String Q2_HDFS_OUT = HDFS_URL + "/Results/Q2";
+    public static final String Q3_HDFS_OUT = HDFS_URL + "/Results/Q3";
+    public static final String Q1S_HDFS_OUT = HDFS_URL + "/Results/Q1SQL";
+    public static final String Q2S_HDFS_OUT = HDFS_URL + "/Results/Q2SQL";
+    public static final String Q3S_HDFS_OUT = HDFS_URL + "/Results/Q3SQL";
 }

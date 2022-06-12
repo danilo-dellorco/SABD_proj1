@@ -132,6 +132,20 @@ services:
     ports:
       - '27017:27017'
 
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - 3000:3000
+    volumes:
+      - ./grafana/grafana.ini:/etc/grafana/grafana.ini
+      - ./grafana/dashboards:/etc/grafana/dashboards
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ../Results:/opt/results
+    environment:
+    - GF_INSTALL_PLUGINS=marcusolsson-csv-datasource   
+
+
 networks:
   default:
     name: proj1_network

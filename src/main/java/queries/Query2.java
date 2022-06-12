@@ -218,7 +218,7 @@ public class Query2 extends Query {
         try (FileWriter fileWriter = new FileWriter(outputName)) {
             StringBuilder outputBuilder = new StringBuilder("YYYY-MM-DD HH;");
             for (int i = 1; i < 266; i++) {
-                outputBuilder.append("perc_PU"+i);
+                outputBuilder.append("perc_PU"+i+";");
             }
             outputBuilder.append("avg_tip;stddev_tip;pref_payment\n");
             fileWriter.append(outputBuilder.toString());

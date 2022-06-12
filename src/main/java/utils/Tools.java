@@ -169,7 +169,6 @@ public class Tools {
         System.out.println("║—————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————");
 
         System.out.println("║——————————————————————————————————————————————————— System Configuration —————————————————————————————————————————————————————");
-        System.out.println("║ Execution Mode: " + Config.EXEC_MODE);
         System.out.println("║ # Workers     : " + Config.NUM_WORKERS);
         System.out.println("║ Data Mode     : " + Config.DATA_MODE);
         System.out.println("║ —————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————");

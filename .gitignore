@@ -26,5 +26,7 @@ hs_err_pid*
 target/
 nifi/content-repository/*
 nifi/logs/*
+nifi/provenance_repository/*
+nifi/state/*
 *.iml
 data/

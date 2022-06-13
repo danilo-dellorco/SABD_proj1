@@ -47,7 +47,7 @@ python3 start-all.py
 * Al termine del setup precedente, eseguire singolamente le query desiderate tramite script bash
 ```bash
 cd docker
-sh executeQuery.sh Main {query_name} {execution_mode}
+sh executeSpark.sh Main {query_name} {execution_mode}
 ```
 - query_name = ```Q1 / Q2 / Q3 / Q1SQL / Q2SQL / Q3SQL```
 - execution_mode = ```LOCAL / DOCKER``` (modalità _local_ utilizzata solamente in fase di sviluppo).

@@ -57,5 +57,5 @@ sh executeQuery.sh Main {query_name} {execution_mode}
 I risultati delle singole query vengono salvati nella cartella [Results](https://github.com/danilo-dellorco/SABD_proj1/tree/master/Results) in formato ```.csv```. 
 Sono inoltre disponisibili i tempi di esecuzioni delle query. 
 
-Per avere una visualizzazione grafica dei risultati delle query, è possibile accedere ad una dashboard Grafana al seguente [link](http://localhost:3000/d/QVfEthCnz/sabd-1?orgId=1) locale. 
+Per avere una visualizzazione grafica dei risultati delle query, è possibile accedere ad una dashboard Grafana al seguente [link](http://localhost:3001/d/QVfEthCnz/sabd-1?orgId=1) locale. 
 

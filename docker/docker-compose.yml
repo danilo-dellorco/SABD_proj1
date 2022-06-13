@@ -103,7 +103,6 @@ services:
     ports:
       - '9862:9864'
 
-  # https://medium.com/geekculture/host-a-fully-persisted-apache-nifi-service-with-docker-ffaa6a5f54a3
   nifi-node:
     image: apache/nifi:latest
     container_name: nifi-master

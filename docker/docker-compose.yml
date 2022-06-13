@@ -53,7 +53,7 @@ services:
       - SPARK_RPC_ENCRYPTION_ENABLED=no
       - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
       - SPARK_SSL_ENABLED=no
-
+#
   spark-worker4:
     image: docker.io/bitnami/spark:3.2.1
     container_name: spark-worker4
@@ -130,6 +130,20 @@ services:
     container_name: mongo-server
     ports:
       - '27017:27017'
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - 3001:3000
+    volumes:
+      - ./grafana/grafana.ini:/etc/grafana/grafana.ini
+      - ./grafana/dashboards:/etc/grafana/dashboards
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ../Results:/opt/results
+    environment:
+    - GF_INSTALL_PLUGINS=marcusolsson-csv-datasource   
+
 
 networks:
   default:

@@ -36,7 +36,6 @@ import java.util.List;
 import static utils.Tools.getTimestamp;
 import static utils.Tools.getTopFiveDestinations;
 
-//TODO sistemare commenti
 
 
 public class Query3 extends Query {

@@ -48,10 +48,9 @@ python3 start-all.py
 ```bash
 cd docker
 sh executeQuery.sh Main {query_name} {execution_mode}
-
-  # query_name = Q1/Q2/Q3/Q1SQL/Q2SQL/Q3SQL
-  # execution_mode = local/docker (modalità local utilizzata solamente in fase di sviluppo)
 ```
+- query_name = Q1 / Q2 / Q3 / Q1SQL / Q2SQL / Q3SQL
+- execution_mode = LOCAL / DOCKER (modalità _local_ utilizzata solamente in fase di sviluppo).
 
 ## Risultati
 I risultati delle singole query vengono salvati nella cartella [Results](https://github.com/danilo-dellorco/SABD_proj1/tree/master/Results) in formato ```.csv```. 

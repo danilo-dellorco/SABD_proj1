@@ -29,4 +29,4 @@ nifi/logs/*
 nifi/provenance_repository/*
 nifi/state/*
 *.iml
-data/
+data/*

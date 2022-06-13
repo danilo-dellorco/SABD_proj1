@@ -16,10 +16,10 @@ chmod 777 nifi/*
 * Eseguire il build dell'immagine docker HDFS
 ```bash
 cd docker/build
-docker build  -t matnar/hadoop:3.3.2 .
+sudo docker build  -t matnar/hadoop:3.3.2 .
 ```
 
-* Eseguire il build del progetto tramite Maven
+* Eseguire il build del progetto tramite Maven, spostandosi prima nella directory SABD_proj1/
 
 ```bash
 mvn package
@@ -29,7 +29,12 @@ mvn package
 
 ```bash
 cd docker
-docker-compose up
+sudo docker-compose up
+```
+oppure
+```bash
+cd docker
+sudo docker compose up
 ```
 
 * Avviare il nodeformat di HDFS e il flusso di pre-processamento NIFI tramite script python
@@ -42,15 +47,14 @@ python3 start-all.py
 * Al termine del setup precedente, eseguire singolamente le query desiderate tramite script bash
 ```bash
 cd docker
-sh executeQuery.sh Main {query_name} {execution_mode}
-
-  # query_name = Q1/Q2/Q3/Q1SQL/Q2SQL/Q3SQL
-  # execution_mode = local/docker (modalità local utilizzata solamente in fase di sviluppo)
+sh executeSpark.sh Main {query_name} {execution_mode}
 ```
+- query_name = ```Q1 / Q2 / Q3 / Q1SQL / Q2SQL / Q3SQL```
+- execution_mode = ```LOCAL / DOCKER``` (modalità _local_ utilizzata solamente in fase di sviluppo).
 
 ## Risultati
 I risultati delle singole query vengono salvati nella cartella [Results](https://github.com/danilo-dellorco/SABD_proj1/tree/master/Results) in formato ```.csv```. 
 Sono inoltre disponisibili i tempi di esecuzioni delle query. 
 
-Per avere una visualizzazione grafica dei risultati delle query, è possibile accedere ad una dashboard Grafana al seguente [link](http://localhost:3000/d/QVfEthCnz/sabd-1?orgId=1) locale. 
+Per avere una visualizzazione grafica dei risultati delle query, è possibile accedere ad una dashboard Grafana al seguente [link](http://localhost:3001/d/QVfEthCnz/sabd-1?orgId=1) locale. 
 

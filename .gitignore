@@ -24,7 +24,8 @@ hs_err_pid*
 
 .idea/
 target/
-nifi/content-repository/*
+nifi/conf/archive/*
+nifi/content_repository/*
 nifi/logs/*
 nifi/state/*
 nifi/provenance_repository/*

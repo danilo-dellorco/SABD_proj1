@@ -91,7 +91,7 @@ public class Query2 extends Query {
         // RDD:=[hour,{((hour,payment),occurrences]
         JavaPairRDD<String, Iterable<Tuple2<KeyQ2Pay, Integer>>> grouped = red_pay.groupBy((Function<Tuple2<KeyQ2Pay, Integer>, String>) r -> r._1().getHour());
 
-        // RDD:=[time_slot,(top_payment,occurrences)]
+        // RDD:=[hour,(top_payment,occurrences)]
         JavaPairRDD<String, Long> top_payments = grouped.mapToPair(r ->
                 new Tuple2<>(
                         r._1(),
@@ -132,14 +132,14 @@ public class Query2 extends Query {
                     return new Tuple2<>(r._1(), r._2()._2());
                 });
 
-        // RDD:=[time_slot,statistics_deviation_sum]
+        // RDD:=[hour,statistics_deviation_sum]
         JavaPairRDD<String, ValQ2> stddev_aggr = iterations.reduceByKey((Function2<ValQ2, ValQ2, ValQ2>) (v1, v2) -> {
             Double tips_total_stddev = v1.getTips_stddev() + v2.getTips_stddev();
             ValQ2 v = new ValQ2(v1.getTips(), v1.getNum_payments(), v1.getPayment_type(), tips_total_stddev);
             return v;
         });
 
-        // RDD:=[time_slot,statistics_deviation]
+        // RDD:=[hour,statistics_deviation]
         JavaPairRDD<String, ValQ2> deviation = stddev_aggr.mapToPair(
                 r -> {
                     Double tips_mean = r._2().getTips();

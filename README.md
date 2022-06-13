@@ -16,10 +16,10 @@ chmod 777 nifi/*
 * Eseguire il build dell'immagine docker HDFS
 ```bash
 cd docker/build
-docker build  -t matnar/hadoop:3.3.2 .
+sudo docker build  -t matnar/hadoop:3.3.2 .
 ```
 
-* Eseguire il build del progetto tramite Maven
+* Eseguire il build del progetto tramite Maven, spostandosi prima nella directory SABD_proj1/
 
 ```bash
 mvn package
@@ -29,7 +29,12 @@ mvn package
 
 ```bash
 cd docker
-docker-compose up
+sudo docker-compose up
+```
+oppure
+```bash
+cd docker
+sudo docker compose up
 ```
 
 * Avviare il nodeformat di HDFS e il flusso di pre-processamento NIFI tramite script python

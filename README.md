@@ -32,7 +32,7 @@ cd docker
 docker-compose up
 ```
 
-* Avviare il nodeformat di HDFS e il flusso di pre-processamento NIFI tramite script bash
+* Avviare il nodeformat di HDFS e il flusso di pre-processamento NIFI tramite script python
 
 ```bash
 cd docker

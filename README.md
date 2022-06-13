@@ -43,8 +43,13 @@ sudo docker compose up
 cd docker
 python3 start-all.py
 ```
+* Opzionalmente è possibile rimuovere il container NiFi al termine del pre-processamento per ottenere aggravare meno sulle risorse della macchina locale
+```bash
+docker stop nifi-master
+docker rm nifi-master
+```
 
-* Al termine del setup precedente, eseguire singolamente le query desiderate tramite script bash
+* Al termine del setup precedente, eseguire singolamente le query desiderate tramite script bash. 
 ```bash
 cd docker
 sh executeSpark.sh Main {query_name} {execution_mode}
